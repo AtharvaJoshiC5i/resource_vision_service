@@ -6,3 +6,7 @@ pydantic==2.12.5
 pydantic-settings==2.6.1
 httpx==0.28.1
 pytest==8.3.4
+
+# Local availability engine (pools, capacity, demo data). Install from services/staffing-api:
+# pip install -r requirements.txt
+-e ../../packages/rv-availability
