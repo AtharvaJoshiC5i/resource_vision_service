@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  rv-availability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e "./packages/rv-availability[dev]"
+      - run: python -m pytest tests -q
+        working-directory: packages/rv-availability
+
+  staffing-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ./packages/rv-availability
+      - run: pip install -r services/staffing-api/requirements.txt
+      - run: python -m pytest tests -q
+        working-directory: services/staffing-api
+        env:
+          RV_DATA_SOURCE: demo
+          STAFFING_PERSISTENCE: memory

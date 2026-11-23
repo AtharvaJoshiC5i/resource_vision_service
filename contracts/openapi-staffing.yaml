@@ -1,0 +1,22 @@
+openapi: 3.1.0
+info:
+  title: RV Confirmed Staffing API
+  version: 0.1.0
+servers:
+  - url: http://127.0.0.1:8010
+paths:
+  /api/staffing/pools/search:
+    post:
+      summary: Build ranked candidate pool
+  /api/staffing/demands:
+    post:
+      summary: Create staffing demand
+  /api/staffing/candidates/{id}/final-check:
+    post:
+      summary: Final check and reserve
+  /api/staffing/events/project-track:
+    post:
+      summary: Project Track webhook (stub)
+  /api/staffing/admin/reconcile:
+    post:
+      summary: Reconcile reservations vs PT writes

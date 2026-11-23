@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project Track × Resource Vision Simulator</title>
+<style>
+:root{
+  --brand:#4c1d95;--brand2:#7c3aed;--brand3:#a78bfa;--brand-soft:#f4f0ff;--bg:#f4f3f9;--card:#fff;--ink:#1c1832;--ink2:#4a4562;--muted:#797491;--line:#e6e2f0;--line2:#f0edf6;
+  --green:#0b7a58;--green-bg:#e3f6ed;--green-line:#b9e4d1;--amber:#8a5a06;--amber-bg:#fff2d6;--amber-line:#f0dba6;--red:#a3283f;--red-bg:#fdebee;--red-line:#f2c2cb;--blue:#2f44b0;--blue-bg:#e8ecfd;--teal:#1f6d62;--teal-bg:#e6f6f4;--teal-line:#b9e0da;--grey-bg:#eceaf3;
+  --shadow:0 1px 2px #1b123a0d,0 10px 30px -8px #1b123a1f;--radius:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 420px at 50% -160px,#e4dcfa,transparent),var(--bg);color:var(--ink);font:13px/1.55 Inter,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+h1{font-size:22px;margin:2px 0;letter-spacing:-.4px;font-weight:750}
+h2{font-size:16px;margin:0;letter-spacing:-.15px;font-weight:700}
+h3{font-size:10.5px;margin:0 0 10px;text-transform:uppercase;letter-spacing:1.3px;color:var(--muted);font-weight:700}
+small,.muted{color:var(--muted)}
+.nw{white-space:nowrap}
+pre{background:#150f2b;color:#e8e2ff;padding:16px;border-radius:12px;overflow:auto;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;max-height:60vh}
+::-webkit-scrollbar{height:9px;width:9px}::-webkit-scrollbar-thumb{background:#d3cee4;border-radius:9px}::-webkit-scrollbar-track{background:transparent}
+
+.btn{padding:8px 15px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer;font-weight:600;color:#3a3353;transition:.16s;white-space:nowrap;box-shadow:0 1px 0 #1b123a08}
+.btn:hover{background:var(--brand-soft);border-color:#d6c9f7;transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));border-color:var(--brand);color:#fff;box-shadow:0 4px 14px -2px #5b21b655}
+.btn.primary:hover{filter:brightness(1.1)}
+.btn.teal{background:var(--teal-bg);border-color:var(--teal-line);color:var(--teal)}
+.btn.teal:hover{background:#d7f0ec}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:8px}
+.btn.danger{color:var(--red);border-color:var(--red-line)}
+.btn.danger:hover{background:var(--red-bg)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{padding:8px 11px;border:1px solid #d9d4e8;border-radius:9px;background:#fff;max-width:100%;transition:.15s}
+input:focus,select:focus,textarea:focus{outline:3px solid #ddd0fb;border-color:var(--brand2)}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--brand2)}
+textarea{width:100%;min-height:80px;resize:vertical}
+label{display:grid;gap:5px;font-size:11.5px;color:#5a5473;font-weight:650}
+
+.top{background:radial-gradient(800px 320px at 88% -60%,#7c47e0 0,transparent 62%),radial-gradient(500px 240px at 8% 130%,#3b1d8a 0,transparent 60%),linear-gradient(120deg,#150d2e,#2a1560 58%,#43209a);color:#fff;padding:20px 32px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{display:flex;gap:15px;align-items:center}
+.mark{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#c4adf5,#6d3fd1);display:grid;place-items:center;font-weight:900;font-size:16px;box-shadow:0 8px 20px #0007,inset 0 1px 0 #fff6}
+.brand{font-weight:800;letter-spacing:2px;font-size:10px;color:#c9b6f7}
+.top h1{color:#fff}
+.top .muted{color:#cbc0e6}
+.flex{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.between{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.top .btn{background:#ffffff14;border-color:#ffffff30;color:#fff;box-shadow:none}
+.top .btn:hover{background:#ffffff2b}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#ffffff1c;border:1px solid #ffffff30;color:#efe9ff;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700}
+.chip.dark{background:var(--brand-soft);border-color:#ddd0f8;color:var(--brand)}
+.chip.ok{background:var(--green-bg);border-color:var(--green-line);color:var(--green)}
+.chip.warn{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber)}
+.chip.teal{background:var(--teal-bg);border-color:var(--teal-line);color:var(--teal)}
+
+.tabs{display:flex;gap:6px;background:#ffffffd9;backdrop-filter:blur(12px);padding:8px 26px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.tabs button{border:0;background:transparent;padding:9px 16px;cursor:pointer;font-weight:650;color:#6a6580;border-radius:10px;display:flex;gap:8px;align-items:center;transition:.15s}
+.tabs button:hover{color:var(--brand);background:var(--brand-soft)}
+.tabs button.active{color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 4px 12px -2px #5b21b655}
+.badge{background:var(--brand);color:#fff;border-radius:999px;font-size:10.5px;padding:1px 8px;font-weight:800}
+.tabs button.active .badge{background:#fff;color:var(--brand)}
+.badge.zero{background:#cfcbdc;color:#fff}
+
+.layout{max-width:1900px;margin:auto;padding:22px;display:grid;grid-template-columns:minmax(0,1fr) 304px;gap:20px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:20px;box-shadow:var(--shadow)}
+.panel>.between>h2:before,.panel>h2:before{content:"";display:inline-block;width:4px;height:16px;background:linear-gradient(var(--brand2),var(--brand));border-radius:3px;margin-right:10px;vertical-align:-3px}
+.aside{position:sticky;top:64px}
+.aside .panel{padding:17px;margin-bottom:14px}
+.fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px 22px}
+.fields small{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.9px;font-weight:650}
+.fields b{display:block;margin-top:3px;font-size:14px}
+.note{background:linear-gradient(135deg,#f6f2ff,#f1ecfd);border:1px solid #e3d9f9;border-radius:12px;padding:12px 15px;line-height:1.65;margin:12px 0;color:#41306c}
+.warning{background:#fff9ea;border:1px solid var(--amber-line);border-radius:12px;padding:12px 15px;line-height:1.65;margin:12px 0;color:#664809}
+.scroll{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+
+.stagebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+.stg{border:1px solid var(--teal-line);background:var(--teal-bg);color:var(--teal);border-radius:999px;min-width:38px;height:34px;padding:0 13px;font-weight:800;cursor:pointer;transition:.15s}
+.stg:hover{filter:brightness(.97)}
+.stg.six{border-color:var(--amber-line);background:var(--amber-bg);color:var(--amber)}
+.stg.on{outline:3px solid #ddd0fb;border-color:var(--brand2);box-shadow:0 4px 12px -2px #5b21b655}
+.stg.past{opacity:.55}
+
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px;font-size:11.5px;color:#5a5473;font-weight:650}
+.steps span{background:#faf9fd;border:1px solid var(--line);border-radius:999px;padding:5px 13px}
+.steps span b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--brand);color:#fff;font-size:10px;margin-right:7px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:13px}
+.stat{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:linear-gradient(#fff,#faf9fe);position:relative;overflow:hidden}
+.stat:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--brand2),var(--brand3))}
+.stat span{font-size:10px;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);font-weight:700}
+.stat b{font-size:25px;display:block;margin-top:3px;letter-spacing:-.5px}
+
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+th,td{border-bottom:1px solid var(--line2);padding:11px 12px;text-align:left;vertical-align:middle}
+th{background:#f8f6fc;color:#625d79;white-space:nowrap;font-size:10px;text-transform:uppercase;letter-spacing:.9px;position:sticky;top:0;z-index:2;font-weight:700}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#fcfbff}
+td select{min-width:112px;padding:6px 8px}
+.rolehead td{background:#f5f0ff;border-bottom:1px solid #e3d9f8}
+.rolehead:hover td{background:#f5f0ff}
+.rolehead .rn{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;font-weight:800;font-size:11px}
+tr.cand td{background:#fff}
+tr.cand td.first{border-left:3px solid var(--brand2)}
+tr.cand.booked td.first{border-left-color:#2fb5a3}
+tr.cand .crit{color:#6c6781}
+tr.cand.fresh td{animation:fresh 1.8s ease}
+tr.cand.inactive td{opacity:.6}
+@keyframes fresh{0%,50%{background:#efe5ff}100%{background:#fff}}
+
+.tag{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand);font-size:11px;font-weight:700;white-space:nowrap}
+.tag.ok{background:var(--green-bg);color:var(--green)}
+.tag.bad{background:var(--red-bg);color:var(--red)}
+.tag.warn{background:var(--amber-bg);color:var(--amber)}
+.tag.info{background:var(--blue-bg);color:var(--blue)}
+.tag.teal{background:var(--teal-bg);color:var(--teal)}
+.tag.mute{background:var(--grey-bg);color:#6b6680}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.sk{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:650;border:1px solid;white-space:nowrap}
+.sk i{font-style:normal;font-weight:900}
+.sk em{font-style:normal;font-weight:500;opacity:.88}
+.sk u{text-decoration:none;font-weight:700;opacity:.95}
+.sk.ok{background:var(--green-bg);border-color:var(--green-line);color:var(--green)}
+.sk.bad{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+.sk.neutral{background:#f4f2f9;border-color:var(--line);color:#5a5473}
+.mh{display:inline-flex;flex-direction:column;align-items:center;background:#f4f2f9;border-radius:8px;padding:2px 7px;margin-right:3px;min-width:38px;line-height:1.25}
+.mh small{font-size:9.5px}
+.mh b{font-size:12px}
+.mh.done{background:var(--green-bg);color:var(--green)}
+.mh.soft{background:var(--teal-bg);color:var(--teal)}
+.empcell b{display:block}
+.acts{display:flex;gap:5px;flex-wrap:wrap}
+.meta{display:block;font-size:10.5px;color:var(--muted);margin-top:4px}
+
+.skillrow{display:grid;grid-template-columns:minmax(220px,1fr) 170px 40px;gap:8px;margin:6px 0;max-width:560px}
+.skillbox{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fcfbff;margin:12px 0}
+
+.modalback{position:fixed;inset:0;background:#130b2ba8;backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}
+.modalback.show{display:flex}
+.modal{width:min(1440px,98vw);max-height:94vh;background:#fff;border-radius:20px;display:flex;flex-direction:column;box-shadow:0 40px 100px #130b3466;overflow:hidden}
+.modalhead,.modalfoot{padding:17px 26px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.modalhead{border-bottom:1px solid var(--line);background:linear-gradient(#fff,#faf8ff)}
+.modalfoot{border-top:1px solid var(--line);justify-content:flex-end;background:#faf9fd}
+.modalbody{padding:20px 26px;overflow:auto}
+.event{background:#fbf9ff;border:1px solid #eee9f8;border-left:3px solid var(--brand3);border-radius:10px;padding:11px 14px;margin:8px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.switch{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fafaff}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot.on{background:#1fae7f;box-shadow:0 0 0 3px #1fae7f33}.dot.off{background:#d9505f;box-shadow:0 0 0 3px #d9505f33}
+.rule{display:flex;gap:8px;margin:7px 0;color:#5a5473}
+.rule:before{content:"•";color:var(--brand2);font-weight:900}
+#toast{position:fixed;bottom:24px;right:24px;background:#221340;color:#fff;padding:13px 19px;border-radius:12px;z-index:200;display:none;box-shadow:0 14px 34px #1b123a66;border-left:4px solid var(--brand3);max-width:440px}
+#toast.ok{border-left-color:#1fae7f}#toast.warn{border-left-color:#e8a21c}#toast.bad{border-left-color:#e0556a}
+@media(max-width:1150px){.layout{grid-template-columns:1fr}.aside{position:static}.fields{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.fields,.grid2{grid-template-columns:1fr}.skillrow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="logo">
+    <div class="mark">RV</div>
+    <div>
+      <div class="brand">PROJECT TRACK × RESOURCE VISION</div>
+      <h1 id="projectTitle">Manage Project</h1>
+      <div class="muted" id="projectSubtitle"></div>
+    </div>
+  </div>
+  <div class="flex">
+    <span class="chip ok" id="projChip">Confirmed Project</span>
+    <span class="chip warn">100% SYNTHETIC</span>
+    <span class="chip" id="empCount"></span>
+    <button class="btn" onclick="login()">Switch Project Lead</button>
+    <button class="btn" onclick="resetDemo()">Reset Demo</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="project" class="active" onclick="showTab('project')">Project Details</button>
+  <button data-tab="availability" onclick="showTab('availability')">Availability</button>
+  <button data-tab="kb" onclick="showTab('kb')">Knowledge Benchmarking <span class="badge zero" id="kbBadge">0</span></button>
+  <button data-tab="audit" onclick="showTab('audit')">Audit &amp; MNH</button>
+</nav>
+
+<div class="layout">
+<main>
+  <section id="projectPage">
+    <div class="panel">
+      <div class="between" style="margin-bottom:16px"><h2>Engagement Overview</h2><span class="chip ok" id="statusChip">Complete</span></div>
+      <div class="fields" id="engagement"></div>
+      <div id="stagePanel"></div>
+    </div>
+
+    <div class="panel">
+      <div class="between" style="margin-bottom:4px">
+        <h2>Skill Capabilities Mix · Resourcing</h2>
+        <span class="chip dark">Resource Vision Pools</span>
+      </div>
+      <div class="note" id="modeNote"></div>
+      <div class="steps"><span><b>1</b>Skills and levels</span><span><b>2</b>Green / red match</span><span><b>3</b>Direct, KB or interview</span><span><b>4</b>Final check</span><span><b>5</b>Allocated</span></div>
+      <div class="stats" id="projectStats" style="margin-bottom:18px"></div>
+      <div class="flex">
+        <button class="btn primary" onclick="addRole()">+ New Resource Role</button>
+        <button class="btn" onclick="hiringForm()">Send request to MyNextHire</button>
+      </div>
+      <div class="scroll" style="margin-top:16px">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Primary Capability</th><th>Secondary Capability</th><th>Department</th>
+            <th>Location</th><th>Country</th><th>Grade</th>
+            <th>Employee</th><th>Monthly Hours (Jan–Jun)</th><th>Skills &amp; KB</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="roleRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 style="margin-bottom:12px">Previously Rejected Candidates</h2>
+      <div id="rejectedRows"></div>
+    </div>
+  </section>
+
+  <section id="availabilityPage" hidden>
+    <div class="panel">
+      <h2 style="margin-bottom:14px">Shared Employee Availability</h2>
+      <div class="stats" id="stats"></div>
+      <div class="note">Only confirmed allocations deduct monthly hours. Bookings, interview bookings and KB rows never reduce availability. All five project leads share the same employee pool.</div>
+      <div class="flex">
+        <input id="availabilitySearch" placeholder="Search employee or ID" oninput="renderAvailability()" style="min-width:260px">
+        <button class="btn" onclick="advanceMonth()">Next Reporting Month</button>
+        <span class="muted" id="availabilityShown"></span>
+      </div>
+      <div class="scroll" style="margin-top:12px;max-height:620px">
+        <table>
+          <thead><tr><th>Employee</th><th>Capability</th><th>Work Status</th><th>Confirmed Hours</th><th>Leads planning interview</th><th>Booked (soft)</th><th>Available Hours</th></tr></thead>
+          <tbody id="availabilityRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="kbPage" hidden>
+    <div class="panel">
+      <div class="between" style="margin-bottom:14px">
+        <h2>Knowledge Benchmarking</h2>
+        <div class="flex">
+          <span id="kbServiceChip"></span>
+          <button class="btn" onclick="toggleKB()">Toggle KB Service</button>
+        </div>
+      </div>
+      <div class="stats" id="kbStats"></div>
+      <div class="note">
+        Flow: the lead picks <b>Send to KB for Skill Upgrading</b> for an employee → Resource Vision compares required and current levels in the shared skills database →
+        it counts days from <b>today's date</b> (the date the lead clicks send) to the project start and splits them <b>85% training / 15% buffer</b> →
+        it sends KB the training days, buffer days, the number of employees fully matched, with one gap and with several gaps,
+        and every lacking skill with its current and target level. When training completes the new levels are written back to the shared database.
+        Afterwards the lead selects directly or books an interview. If the KB service is unavailable the request stays pending and can be retried.
+      </div>
+      <h3 style="margin-top:20px">Requests sent to Knowledge Benchmarking</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Request</th><th>Project</th><th>Sent on</th><th>Project start</th><th>Days</th><th>Training / Buffer</th><th>Employees</th><th>Skill gaps requested</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="kbReqRows"></tbody>
+      </table></div>
+      <h3 style="margin-top:22px">Training queue</h3>
+      <div class="scroll"><table>
+        <thead><tr><th>Employee</th><th>Project</th><th>Skills to close (current → target)</th><th>Training window</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="kbRows"></tbody>
+      </table></div>
+      <h3 style="margin-top:22px">Shared skills database · updates after training</h3>
+      <div id="skillUpdateRows"></div>
+      <h3 style="margin-top:22px">Technical rejection feedback received from interviews</h3>
+      <div id="kbFeedbackRows"></div>
+    </div>
+  </section>
+
+  <section id="auditPage" hidden>
+    <div class="panel">
+      <div class="between" style="margin-bottom:12px">
+        <h2>Audit History &amp; Hiring Requests</h2>
+        <button class="btn" onclick="exportAudit()">Export Synthetic Audit</button>
+      </div>
+      <h3>MNH Requests</h3>
+      <div id="hiringRows"></div>
+      <h3 style="margin-top:22px">Events</h3>
+      <div id="auditRows"></div>
+    </div>
+  </section>
+</main>
+
+<aside class="aside">
+  <div class="panel"><h3>Signed in</h3><div id="signedIn"></div></div>
+  <div class="panel">
+    <h3>Simulation clock</h3>
+    <div id="clock" style="font-weight:700;font-size:15px;margin-bottom:4px"></div>
+    <div class="muted" id="clockDate" style="margin-bottom:10px"></div>
+    <div class="flex">
+      <button class="btn sm" onclick="advanceDay(1)">+1 Day</button>
+      <button class="btn sm" onclick="advanceDay(7)">+7 Days</button>
+      <button class="btn sm" onclick="advanceMonth()">+1 Month</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>Systems</h3>
+    <div class="switch"><span id="kbSwitchLabel"></span><button class="btn sm" onclick="toggleKB()">Toggle</button></div>
+  </div>
+  <div class="panel"><h3>Workflow counts</h3><div id="counts"></div></div>
+  <div class="panel">
+    <h3>Business rules</h3>
+    <div class="rule">Unconfirmed projects: stages 1–5 booking only; stage 6 booking and blocking.</div>
+    <div class="rule">Booking: soft selection, no hours deducted, no hold, no block.</div>
+    <div class="rule">Interview: now or after confirmation, lead decides. Booking an interview deducts no hours; 7-day expiry.</div>
+    <div class="rule">Direct select: hours assigned as entered after the final capacity check.</div>
+    <div class="rule">Only confirmed allocations deduct hours, immediately.</div>
+    <div class="rule">Level order: Foundational &lt; Applied &lt; Advanced &lt; Expert. At or above required = green; lower or missing = red.</div>
+    <div class="rule">KB window: days from today (send date) to project start, 85% training / 15% buffer.</div>
+    <div class="rule">Day 0 = today's real date. Project starts 01 Jan 2027 (day <span id="neededBy"></span>).</div>
+  </div>
+</aside>
+</div>
+
+<div class="modalback" id="modalBack">
+  <div class="modal">
+    <div class="modalhead">
+      <div><h2 id="modalTitle"></h2><small id="modalSubtitle"></small></div>
+      <button class="btn" onclick="closeModal()">✕ Close</button>
+    </div>
+    <div class="modalbody" id="modalBody"></div>
+    <div class="modalfoot" id="modalFoot"></div>
+  </div>
+</div>
+<datalist id="skillSuggest"></datalist>
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun"];
+const CAPACITY=176;
+/* ---- Calendar: day 0 is TODAY (the real current date from the system clock). ---- */
+const TODAY=new Date();
+const BASE=Date.UTC(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate());
+const PROJECT_START=Date.UTC(2027,0,1);
+const NEEDED_BY=Math.round((PROJECT_START-BASE)/864e5);   // days from today to project start (01 Jan 2027)
+const INACTIVE=["Rejected","Expired","Released","Closed"];
+const PER_COMBO=8;
+const LEVELS=["Foundational","Applied","Advanced","Expert"];
+const TRAIN_SPLIT=0.85;                   // 85% training / 15% buffer
+const EXPIRY_DAYS=7;                      // interview booking expiry
+
+const LEADS=[
+ {id:"L0",name:"Aditi Rao",project:"Project Aurora",type:"Confirmed",stage0:null},
+ {id:"L1",name:"Bharat Nair",project:"Project Nova",type:"Confirmed",stage0:null},
+ {id:"L2",name:"Charu Mehta",project:"Project Atlas",type:"Unconfirmed",stage0:2},
+ {id:"L3",name:"Dev Malhotra",project:"Project Vega",type:"Unconfirmed",stage0:5},
+ {id:"L4",name:"Esha Kapoor",project:"Project Titan",type:"Unconfirmed",stage0:6}
+].map((x,i)=>({...x,projectId:"SYN-PROJ-"+(420+i)}));
+
+const CATALOG={
+ "Data Engineering & BI":["Data Engineering","BI Engineering"],
+ "Data Science":["Machine Learning","Generative AI"],
+ "Digital Engineering":["Frontend","Backend"],
+ "MIA":["Primary Research","Secondary Research"]
+};
+const SKILL_BANK={
+ "Data Engineering & BI":["Python","SQL","PySpark","Databricks","Power BI","Azure Data Factory","Snowflake","Tableau"],
+ "Data Science":["Python","Machine Learning","TensorFlow","SQL","NLP","LLMs","Statistics","MLOps"],
+ "Digital Engineering":["JavaScript","React","Node.js","Java","TypeScript","SQL","AWS","Docker"],
+ "MIA":["Market Research","Survey Design","Excel","Power BI","Secondary Research","Competitive Analysis","SQL","Python"]
+};
+const DEPARTMENTS=["Data & AI","Engineering","Research","Analytics"];
+const LOCATIONS=["Offshore","Onshore"];
+const COUNTRIES=["India","United States","United Kingdom"];
+const GRADES=["E1","E2","E3","M1","M2"];
+const FIRST=["Aarav","Diya","Kabir","Meera","Ishaan","Tara","Neel","Anaya","Vivaan","Sara","Rohan","Kiara","Dev","Nisha","Kunal","Ira","Arjun","Zoya","Reyansh","Mira","Veer","Anika","Yash","Pooja","Karan","Riya","Aditya","Sneha","Harsh","Divya","Manav","Esha","Tanay","Lavanya","Ritvik","Navya","Samar","Aisha","Pranav","Juhi"];
+const LAST=["Rao","Bose","Khanna","Sethi","Iyer","Desai","Kapoor","Nair","Joshi","Menon","Shah","Verma","Gupta","Mehta","Reddy","Chopra","Banerjee","Pillai","Malhotra","Saxena","Bhatt","Kulkarni","Agarwal","Naidu","Sinha","Chatterjee","Trivedi","Ghosh","Patil","Singhania"];
+const BENCH_PATTERN=["True Bench","True Bench","True Bench","True Bench","Future Bench","Future Bench","Partially Allocated","In Project"];
+
+const SC={"Confirmed":"ok","Skills Matched":"ok","KB Pending":"warn","Training":"info","Interview Booked":"info","Booked":"teal",
+ "Rejected":"bad","Training Failed":"bad","Training Delayed":"bad",
+ "Expired":"mute","Released":"mute","Closed":"mute"};
+
+let employees=[],empMap=new Map(),rolesByProject={},audit=[],hiring=[],kbFeedback=[],kbRequests=[],skillDb={},skillUpdates=[],stages={};
+let activeLead="L0",day=0,reportingMonth=0,sequence=1,kbOnline=true;
+let poolRole=null,selected=new Set(),poolSearch="",poolAvail="all",poolMatch="all";
+
+function randomGenerator(seed){let x=seed>>>0;return()=>{x=(1664525*x+1013904223)>>>0;return x/4294967296}}
+const lead=()=>LEADS.find(x=>x.id===activeLead);
+const isUnconf=()=>lead().type==="Unconfirmed";
+const stage=()=>stages[activeLead]||null;
+const canBlock=()=>!isUnconf()||stage()>=6;
+const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
+const hash=s=>{let h=7;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))>>>0;return h};
+const rnd=s=>{let h=hash(s);h^=h>>>16;h=Math.imul(h,2246822507)>>>0;h^=h>>>13;h=Math.imul(h,3266489909)>>>0;h^=h>>>16;return h>>>0};
+const skillKey=s=>String(s).trim().toLowerCase();
+const tag=(t,c)=>`<span class="tag ${c??SC[t]??""}">${esc(t)}</span>`;
+const fmt=n=>Number(n).toLocaleString("en-US");
+const dateStr=d=>new Date(BASE+d*864e5).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric",timeZone:"UTC"});
+
+function makeEmployees(){
+ const random=randomGenerator(20271119),result=[];
+ let n=0;
+ for(const primary of Object.keys(CATALOG))
+ for(const secondary of CATALOG[primary])
+ for(const department of DEPARTMENTS)
+ for(const location of LOCATIONS)
+ for(const country of COUNTRIES)
+ for(const grade of GRADES)
+ for(let k=0;k<PER_COMBO;k++){
+  const i=n++,bench=BENCH_PATTERN[k];
+  const invalid=i%47===5&&k>=6;
+  let allocations;
+  if(invalid)allocations=MONTHS.map(()=>null);
+  else if(bench==="True Bench")allocations=MONTHS.map((_,m)=>(i%5===0&&m>=4)?40:0);
+  else if(bench==="Future Bench"){const busy=1+(i%3);allocations=MONTHS.map((_,m)=>m<busy?176:0)}
+  else if(bench==="Partially Allocated"){const base=[40,80,96][i%3];allocations=MONTHS.map(()=>base)}
+  else allocations=MONTHS.map((_,m)=>m<3?176:(i%2?96:Math.round(random()*4)*8));
+  result.push({
+   id:"SYN-"+String(i+1).padStart(5,"0"),
+   name:FIRST[i%FIRST.length]+" "+String.fromCharCode(65+Math.floor(i/FIRST.length)%26)+". "+LAST[Math.floor(i/1040)%LAST.length],
+   primary,secondary,department,location,country,grade,bench,
+   allocations,confirmed:[],identityValid:!invalid
+  });
+ }
+ return result;
+}
+
+const emp=id=>empMap.get(id);
+const roles=()=>rolesByProject[activeLead]||[];
+const role=id=>roles().find(r=>r.id===id);
+const allRoles=()=>Object.values(rolesByProject).flat();
+const allCandidates=()=>allRoles().flatMap(r=>r.candidates);
+const candidate=id=>allCandidates().find(c=>c.id===id);
+
+function official(e,m){return (e.allocations[m]||0)+e.confirmed.filter(c=>c.month===m).reduce((s,c)=>s+c.hours,0)}
+function available(e,m){if(!e.identityValid||e.allocations[m]===null)return null;return CAPACITY-official(e,m)}
+/* Leads planning to interview an employee: active interview bookings plus bookings marked "interview after confirmation". */
+const interviewPlans=e=>allCandidates().filter(c=>c.employeeId===e.id&&((c.status==="Interview Booked"&&c.expires>day)||(c.status==="Booked"&&c.ivPlan==="later")));
+const bookedOn=e=>allCandidates().filter(c=>c.employeeId===e.id&&c.status==="Booked");
+function workStatus(e){return e.confirmed.some(c=>c.month<=reportingMonth)?"In Project":e.bench}
+function monthCells(e){
+ return MONTHS.map((m,i)=>{
+  const h=available(e,i);
+  const cls=h===null||h<=0?"bad":h<80?"warn":"ok";
+  return `<td><span class="tag ${cls}">${h===null?"Unknown":h+"h"}</span></td>`;
+ }).join("");
+}
+
+/* ---------- SHARED SKILLS DATABASE (Resource Vision + Knowledge Benchmarking) ---------- */
+function skillLevel(e,key){
+ const o=skillDb[e.id]&&skillDb[e.id][key];
+ if(o)return o;
+ const hit=(SKILL_BANK[e.primary]||[]).find(s=>skillKey(s)===key);
+ if(!hit)return null;
+ const h=rnd(e.id+"|"+key);
+ if(h%10>=7)return null;
+ const v=Math.floor(h/10)%100;
+ return v<20?"Foundational":v<50?"Applied":v<80?"Advanced":"Expert";
+}
+function empSkillList(e){
+ return (SKILL_BANK[e.primary]||[]).map(s=>({name:s,level:skillLevel(e,skillKey(s))})).filter(s=>s.level);
+}
+const lvRank=l=>LEVELS.indexOf(l);
+function evalSkills(e,req){
+ return req.map(s=>{
+  const key=skillKey(s.name),cur=skillLevel(e,key);
+  return {name:s.name,key,required:s.level,current:cur,ok:cur!==null&&lvRank(cur)>=lvRank(s.level)};
+ });
+}
+function skillChips(items){
+ return `<div class="chips">${items.map(i=>`<span class="sk ${i.ok?"ok":"bad"}" title="Required: ${esc(i.required)} · Current: ${esc(i.current||"not in database")}">
+  <i>${i.ok?"✓":"✗"}</i>${esc(i.name)} <em>${esc(i.current||"Not in DB")}</em>${i.ok?"":` <u>need ${esc(i.required)}</u>`}</span>`).join("")}</div>`;
+}
+function summarizeGaps(rows){
+ const need=rows.filter(x=>x.ev.some(i=>!i.ok));
+ const one=need.filter(x=>x.ev.filter(i=>!i.ok).length===1).length;
+ const g=new Map();
+ need.forEach(x=>x.ev.filter(i=>!i.ok).forEach(i=>{
+  const cur=i.current||"Not in DB",k=i.key+"|"+cur+"|"+i.required;
+  if(!g.has(k))g.set(k,{skill:i.name,currentLevel:cur,targetLevel:i.required,employees:0,employeeIds:[]});
+  const o=g.get(k);o.employees++;o.employeeIds.push(x.id);
+ }));
+ return {total:rows.length,fully:rows.length-need.length,one,multi:need.length-one,need,groups:[...g.values()]};
+}
+/* Days from today (the date the lead clicks send) to project start, split 85% training / 15% buffer. */
+function kbTiming(){
+ const total=NEEDED_BY-day,train=Math.round(total*TRAIN_SPLIT);
+ return {total,train,buffer:total-train,sentDate:dateStr(day),startDate:dateStr(NEEDED_BY)};
+}
+
+function toast(message,type=""){
+ const t=document.getElementById("toast");
+ t.textContent=message;t.className=type;t.style.display="block";
+ clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display="none",4000);
+}
+function log(message){audit.unshift({day,lead:lead().name,message});renderAll()}
+function modal(title,body,footer="",subtitle="Synthetic workflow simulation"){
+ document.getElementById("modalTitle").textContent=title;
+ document.getElementById("modalSubtitle").textContent=subtitle;
+ document.getElementById("modalBody").innerHTML=body;
+ document.getElementById("modalFoot").innerHTML=footer;
+ document.getElementById("modalBack").classList.add("show");
+}
+function closeModal(){document.getElementById("modalBack").classList.remove("show")}
+function options(values,current="",all=false){
+ return (all?'<option value="">All</option>':"")+values.map(v=>`<option value="${esc(v)}" ${v===current?"selected":""}>${esc(v)}</option>`).join("");
+}
+
+function showTab(name){
+ ["project","availability","kb","audit"].forEach(x=>{document.getElementById(x+"Page").hidden=x!==name});
+ document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name));
+ renderAll();
+}
+
+function login(){
+ modal("Synthetic Project Lead Login",`
+ <p>Choose a fictional project lead. All five projects share one employee pool and one skills database.</p>
+ <div class="grid2">${LEADS.map(l=>`
+ <button class="btn" onclick="switchLead('${l.id}')" style="text-align:left;padding:15px">
+ <b>${esc(l.name)}</b><br><small>${esc(l.project)} · ${l.type==="Confirmed"?"Confirmed":"Unconfirmed · Stage "+stages[l.id]}</small></button>`).join("")}</div>`,
+ `<button class="btn" onclick="closeModal()">Cancel</button>`);
+}
+function switchLead(id){activeLead=id;closeModal();if(!roles().length)addRole(false);log("Switched to "+lead().name+" / "+lead().project)}
+
+/* ---------- PROJECT STAGE (unconfirmed projects) ---------- */
+function setStage(n){
+ if(!isUnconf())return;
+ const old=stage();stages[activeLead]=n;
+ log("Project Track stage update for "+lead().project+": stage "+old+" → "+n+(n>=6?". Blocking is now allowed; booked employees can be blocked.":". Booking only."));
+ toast("Stage "+n+(n>=6?" reached: blocking enabled":": booking only"),n>=6?"ok":"warn");
+}
+function advanceStage(){if(isUnconf()&&stage()<6)setStage(stage()+1)}
+function renderStage(){
+ const p=document.getElementById("stagePanel");
+ if(!isUnconf()){
+  p.innerHTML=`<div class="note" style="margin-bottom:0">Confirmed project: Direct select, KB for skill upgrading and interview booking are available. Selected hours are deducted when the final check passes.</div>`;
+  return;
+ }
+ const s=stage();
+ p.innerHTML=`<div class="stagebar"><b style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px">Project stage (Project Track)</b>
+  ${[1,2,3,4,5,6].map(n=>`<button class="stg ${n===6?"six":""} ${n===s?"on":""} ${n<s?"past":""}" onclick="setStage(${n})" title="Simulate Project Track setting stage ${n}">${n}</button>`).join("")}
+  <button class="btn sm" onclick="advanceStage()" ${s>=6?"disabled":""}>Advance stage</button>
+  <span class="chip ${s>=6?"warn":"teal"}">${s>=6?"Stage 6: booking and blocking":"Stages 1–5: booking only"}</span></div>`;
+}
+
+/* ---------- ROLES ---------- */
+function addRole(shouldLog=true){
+ const r={id:"ROLE-"+sequence++,primary:"Data Engineering & BI",secondary:"Data Engineering",department:"Data & AI",location:"Offshore",country:"India",grade:"E1",skills:[],candidates:[]};
+ (rolesByProject[activeLead]=rolesByProject[activeLead]||[]).push(r);
+ if(shouldLog)log("New Project Track resource role added.");else renderAll();
+}
+function updateRole(id,field,value){
+ const r=role(id);r[field]=value;
+ if(field==="primary")r.secondary=CATALOG[value][0];
+ renderRoles();
+}
+const reqSkills=()=>{const r=role(poolRole);return r.skills.filter(s=>s.name.trim()).map(s=>({name:s.name.trim(),level:s.level}))};
+
+function skillCell(c){
+ if(!c.skills.length)return '<span class="muted">No skills required</span>';
+ const items=evalSkills(emp(c.employeeId),c.skills),bad=items.filter(i=>!i.ok).length;
+ return skillChips(items)+`<span class="meta">${bad?bad+" skill gap(s)":"All required skills matched"}${c.trained?" · levels updated after KB training":""}</span>`;
+}
+function actions(c){
+ const b=(t,f,cls="")=>`<button class="btn sm ${cls}" onclick="${f}('${c.id}')">${t}</button>`;
+ const bm=(t,mode,cls="")=>`<button class="btn sm ${cls}" onclick="startSelection('${mode}','${c.id}')">${t}</button>`;
+ switch(c.status){
+  case "Booked":
+   if(!canBlock()){
+    if(c.interviewPassed)return tag("Interview passed","ok")+b("Release","dismiss");
+    if(c.ivPlan==="later")return tag("Interview after confirmation","info")+b("Interview Now","openInterview")+b("Release","dismiss");
+    return b("Interview Now","openInterview","primary")+b("Interview After Confirmation","planLater")+b("Release","dismiss");
+   }
+   if(c.interviewPassed)return bm("Block Employee","Direct","primary")+b("Release","dismiss");
+   return bm("Direct Select","Direct","primary")+bm("Send to KB for Skill Upgrading","KB")+bm("Book for Interview","Interview")+b("Release","dismiss");
+  case "Skills Matched":return b("Select for Project","finalize","primary")+b("Book for Interview","bookInterview");
+  case "KB Pending":return b("Retry Send to KB","retryRequestFor","primary");
+  case "Training":return b("Complete Training","completeTraining","primary")+b("Mark Failed","failTraining","danger");
+  case "Interview Booked":return b("Interview","openInterview","primary");
+  case "Expired":case "Released":return b("Book for Interview","bookInterview");
+  case "Training Failed":case "Training Delayed":return b("Close","dismiss");
+  case "Confirmed":return tag("Allocated","ok");
+  default:return '<span class="muted">—</span>';
+ }
+}
+function statusCell(c){
+ let extra="";
+ if(c.status==="Booked"){
+  const n=interviewPlans(emp(c.employeeId)).length;
+  extra=`<span class="meta">Soft booking · hours not deducted${c.interviewPassed?" · interview passed":c.ivPlan==="later"?" · interview after confirmation":""}${n?" · "+n+" lead(s) planning interview":""}</span>`;
+ }
+ if(c.status==="Interview Booked"){
+  const n=interviewPlans(emp(c.employeeId)).length;
+  extra=`<span class="meta">${esc(c.manager)} · expires ${dateStr(c.expires)} (${EXPIRY_DAYS} days) · ${n} lead(s) planning interview</span>`;
+ }
+ if(c.status==="Training"&&c.training)extra=`<span class="meta">training ends ${dateStr(c.training.trainingEnd)} · buffer until ${dateStr(c.training.deadline)}</span>`;
+ if(c.status==="KB Pending")extra=`<span class="meta">Waiting for KB service</span>`;
+ if(c.status==="Rejected"||c.status==="Released")extra=`<span class="meta">${esc(c.reason)}</span>`;
+ if(c.status==="Expired")extra=`<span class="meta">Hold expired · lead notified</span>`;
+ return tag(c.status)+extra;
+}
+function renderRoles(){
+ document.getElementById("roleRows").innerHTML=roles().map((r,i)=>{
+  const sk=r.skills.filter(s=>s.name.trim());
+  const head=`<tr class="rolehead">
+   <td><span class="rn">${i+1}</span></td>
+   <td><select onchange="updateRole('${r.id}','primary',this.value)">${options(Object.keys(CATALOG),r.primary)}</select></td>
+   <td><select onchange="updateRole('${r.id}','secondary',this.value)">${options(CATALOG[r.primary],r.secondary)}</select></td>
+   <td><select onchange="updateRole('${r.id}','department',this.value)">${options(DEPARTMENTS,r.department)}</select></td>
+   <td><select onchange="updateRole('${r.id}','location',this.value)">${options(LOCATIONS,r.location)}</select></td>
+   <td><select onchange="updateRole('${r.id}','country',this.value)">${options(COUNTRIES,r.country)}</select></td>
+   <td><select onchange="updateRole('${r.id}','grade',this.value)">${options(GRADES,r.grade)}</select></td>
+   <td colspan="5"><div class="flex">
+     <button class="btn primary sm" onclick="openPool('${r.id}')">Select Employee ▾</button>
+     <span class="muted">${r.candidates.length?r.candidates.length+" employee row(s) below":"No employee selected yet"}</span>
+     ${sk.length?`<span class="chips">${sk.map(s=>`<span class="sk neutral">${esc(s.name)} <em>${esc(s.level)}</em></span>`).join("")}</span>`:""}
+   </div></td></tr>`;
+  const rows=r.candidates.map((c,j)=>{
+   const e=emp(c.employeeId),k=c.criteria,done=c.status==="Confirmed",soft=c.status==="Booked";
+   return `<tr class="cand ${soft?"booked":""} ${c.isNew?"fresh":""} ${INACTIVE.includes(c.status)?"inactive":""}">
+   <td class="first muted">${i+1}.${j+1}</td>
+   <td class="crit">${esc(k.primary)}</td><td class="crit">${esc(k.secondary)}</td><td class="crit">${esc(k.department)}</td>
+   <td class="crit">${esc(k.location)}</td><td class="crit">${esc(k.country)}</td><td class="crit">${esc(k.grade)}</td>
+   <td class="empcell"><b>${esc(e.name)}</b><small>${e.id} · ${esc(workStatus(e))}</small></td>
+   <td><div style="display:flex">${MONTHS.map((m,x)=>`<span class="mh ${done?"done":soft?"soft":""}"><small>${m}</small><b>${c.hours[x]}</b></span>`).join("")}</div></td>
+   <td>${skillCell(c)}</td><td>${statusCell(c)}</td><td><div class="acts">${actions(c)}</div></td></tr>`;
+  }).join("");
+  return head+rows;
+ }).join("");
+ allCandidates().forEach(c=>c.isNew=false);
+ renderProjectStats();
+}
+function renderProjectStats(){
+ const cs=roles().flatMap(r=>r.candidates),n=s=>cs.filter(c=>s.includes(c.status)).length;
+ document.getElementById("projectStats").innerHTML=[
+  ["Resource roles",roles().length],
+  ["Booked (soft)",n(["Booked"])],
+  ["Skills matched",n(["Skills Matched"])],
+  ["In KB training",n(["Training"])],
+  ["Waiting for KB",n(["KB Pending"])],
+  ["Interview bookings",n(["Interview Booked"])],
+  ["Allocated",n(["Confirmed"])]
+ ].map(([k,v])=>`<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("");
+}
+
+/* ---------- POOL ---------- */
+function openPool(roleId){poolRole=roleId;selected.clear();poolSearch="";poolAvail="all";poolMatch="all";renderPoolModal()}
+const poolScore=(e,m)=>(e.bench==="True Bench"?1000:e.bench==="Future Bench"?700:e.bench==="Partially Allocated"?400:100)+m*20+Math.min(...MONTHS.map((_,i)=>available(e,i)??0))/10;
+function poolData(){
+ const r=role(poolRole),req=reqSkills();
+ const base=employees.filter(e=>e.primary===r.primary&&e.secondary===r.secondary&&e.department===r.department&&
+  e.location===r.location&&e.country===r.country&&e.grade===r.grade&&e.identityValid);
+ const taken=new Set(r.candidates.filter(c=>c.status==="Rejected"||!INACTIVE.includes(c.status)).map(c=>c.employeeId));
+ const afterRole=base.filter(e=>!taken.has(e.id));
+ const afterAvail=afterRole.filter(e=>{
+  if(poolAvail==="all")return true;
+  const ok=MONTHS.map((_,i)=>(available(e,i)??0)>0);
+  return poolAvail==="every"?ok.every(Boolean):ok.some(Boolean);
+ });
+ const evMap=new Map(afterAvail.map(e=>[e.id,evalSkills(e,req)]));
+ const matches=e=>evMap.get(e.id).filter(i=>i.ok).length;
+ const afterMatch=afterAvail.filter(e=>{
+  if(!req.length||poolMatch==="all")return true;
+  const m=matches(e);return poolMatch==="full"?m===req.length:m>0;
+ });
+ const q=poolSearch.toLowerCase();
+ const list=afterMatch.filter(e=>!q||(e.name+" "+e.id).toLowerCase().includes(q)).sort((a,b)=>poolScore(b,matches(b))-poolScore(a,matches(a)));
+ return {list,evMap,req,total:base.length,hiddenRole:base.length-afterRole.length,hiddenAvail:afterRole.length-afterAvail.length,hiddenMatch:afterAvail.length-afterMatch.length};
+}
+function renderSkillRows(){
+ const r=role(poolRole);
+ document.getElementById("skillSuggest").innerHTML=(SKILL_BANK[r.primary]||[]).map(s=>`<option value="${esc(s)}">`).join("");
+ document.getElementById("skillRows").innerHTML=r.skills.length?r.skills.map((s,i)=>`
+  <div class="skillrow">
+   <input list="skillSuggest" placeholder="Type a skill, e.g. Python" value="${esc(s.name)}" oninput="setSkill(${i},'name',this.value)">
+   <select onchange="setSkill(${i},'level',this.value)">${options(LEVELS,s.level)}</select>
+   <button class="btn sm danger" onclick="removeSkill(${i})" title="Remove skill">✕</button>
+  </div>`).join(""):'<span class="muted">No skills added yet. Add a skill and its required level to see green / red matches for every employee.</span>';
+}
+function addSkill(){role(poolRole).skills.push({name:"",level:"Advanced"});renderSkillRows();renderPoolTable()}
+function setSkill(i,f,v){role(poolRole).skills[i][f]=v;renderPoolTable()}
+function removeSkill(i){role(poolRole).skills.splice(i,1);renderSkillRows();renderPoolTable()}
+function modeBanner(){
+ if(!isUnconf())return `<div class="note"><b>Confirmed project.</b> Choose per employee: <b>Direct Select</b> (hours assigned as entered), <b>Send to KB for Skill Upgrading</b>, or <b>Book for Interview</b>.</div>`;
+ const s=stage();
+ return s>=6
+  ?`<div class="note"><b>Unconfirmed project · Stage 6.</b> Booking and blocking are both allowed. Book softly, or block with Direct Select, Send to KB for Skill Upgrading or Book for Interview.</div>`
+  :`<div class="note"><b>Unconfirmed project · Stage ${s}.</b> Booking only. A booking selects the ideal candidates without deducting hours, holding or blocking. Blocking opens at Stage 6.</div>`;
+}
+function renderPoolModal(){
+ const r=role(poolRole),blocking=canBlock();
+ modal("Resource Vision Pools",`
+ <div class="note"><b>Inherited from Project Track:</b> ${esc(r.primary)} · ${esc(r.secondary)} · ${esc(r.department)} · ${esc(r.location)} · ${esc(r.country)} · ${esc(r.grade)}<br>Project period: 01 Jan 2027 – 30 Jun 2027. Today is ${dateStr(day)}, so there are ${Math.max(0,NEEDED_BY-day)} day(s) until the project starts.</div>
+ ${modeBanner()}
+ <div class="skillbox">
+  <div class="between" style="margin-bottom:6px"><h3 style="margin:0">Required skills and levels (typed manually)</h3><button class="btn sm primary" onclick="addSkill()">+ Add skill</button></div>
+  <div id="skillRows"></div>
+ </div>
+ <div class="flex">
+  <label>Search Employee
+   <input id="poolSearch" placeholder="Name or Employee ID" value="${esc(poolSearch)}" oninput="poolSearch=this.value;renderPoolTable()"></label>
+  <label>Availability
+   <select onchange="poolAvail=this.value;renderPoolTable()">
+    <option value="all" ${poolAvail==="all"?"selected":""}>All matching employees</option>
+    <option value="any" ${poolAvail==="any"?"selected":""}>Free hours in at least one month</option>
+    <option value="every" ${poolAvail==="every"?"selected":""}>Free hours in every month</option>
+   </select></label>
+  <label>Skill match
+   <select onchange="poolMatch=this.value;renderPoolTable()">
+    <option value="all" ${poolMatch==="all"?"selected":""}>Show everyone</option>
+    <option value="full" ${poolMatch==="full"?"selected":""}>Only full match (all green)</option>
+    <option value="some" ${poolMatch==="some"?"selected":""}>At least one green skill</option>
+   </select></label>
+ </div>
+ <div class="note">Skills come from the shared skills database. <b style="color:var(--green)">Green ✓</b> = at or above the required level. <b style="color:var(--red)">Red ✗</b> = lower level or skill missing. Only confirmed allocations deduct hours.</div>
+ <div id="poolTable"></div>`,
+ `<span id="selectionCount" class="muted" style="margin-right:auto">0 selected</span>
+ <button class="btn" onclick="closeModal()">Cancel</button>
+ ${isUnconf()?`<button class="btn teal" onclick="startSelection('Book')">Book (soft, no hours)</button>`:""}
+ ${blocking?`<button class="btn" onclick="startSelection('KB')">Send to KB for Skill Upgrading</button>
+ <button class="btn" onclick="startSelection('Interview')">Book for Interview</button>
+ <button class="btn primary" onclick="startSelection('Direct')">Direct Select</button>`:""}`);
+ renderSkillRows();
+ renderPoolTable();
+}
+function renderPoolTable(){
+ const d=poolData(),list=d.list,req=d.req;
+ document.getElementById("poolTable").innerHTML=`
+ <div class="flex" style="margin:12px 0">
+  <span class="chip dark">${list.length} shown of ${d.total} matching</span>
+  <span class="chip dark">${list.filter(e=>e.bench==="True Bench").length} true bench</span>
+  ${req.length?`<span class="chip ok">${list.filter(e=>d.evMap.has(e.id)&&d.evMap.get(e.id).every(i=>i.ok)).length} full skill match</span>`:""}
+  ${d.hiddenRole?`<span class="chip warn">${d.hiddenRole} already on this role</span>`:""}
+  ${d.hiddenAvail?`<span class="chip warn">${d.hiddenAvail} hidden by availability filter</span>`:""}
+  ${d.hiddenMatch?`<span class="chip warn">${d.hiddenMatch} hidden by skill-match filter</span>`:""}
+  <button class="btn sm" onclick="selectTop(5)">Select top 5</button>
+  <button class="btn sm" onclick="selected.clear();renderPoolTable()">Clear</button>
+ </div>
+ <div class="scroll" style="max-height:400px"><table>
+ <thead><tr><th>Select</th><th>Employee</th><th>Skills (shared DB)</th><th>Bench Status</th><th>Grade</th>${MONTHS.map(m=>`<th>${m} 2027</th>`).join("")}<th>Leads planning interview</th></tr></thead>
+ <tbody>${list.map(e=>{
+  const ev=d.evMap.get(e.id),ok=ev.filter(i=>i.ok).length,ip=interviewPlans(e).length,bk=bookedOn(e).length;
+  const sk=req.length?skillChips(ev)+`<span class="meta">${ok}/${req.length} skills matched</span>`
+   :`<div class="chips">${empSkillList(e).slice(0,4).map(s=>`<span class="sk neutral">${esc(s.name)} <em>${esc(s.level)}</em></span>`).join("")}</div>`;
+  return `<tr>
+  <td><input type="checkbox" ${selected.has(e.id)?"checked":""} onchange="toggleEmployee('${e.id}',this.checked)"></td>
+  <td><b>${esc(e.name)}</b><br><small>${e.id} · ${esc(e.secondary)}</small>${bk?`<br><span class="tag teal">Booked on ${bk} project(s)</span>`:""}</td>
+  <td>${sk}</td><td>${esc(workStatus(e))}</td><td>${e.grade}</td>${monthCells(e)}
+  <td>${ip?`<button class="btn sm" onclick="viewInterviews('${e.id}')">${ip} lead(s)</button>`:'<span class="muted">None</span>'}</td>
+ </tr>`}).join("")}</tbody></table></div>
+ ${!list.length?`<div class="warning">No employees to show for these filters${d.hiddenRole?" — all matching employees are already on this role. Use another filter combination or a new role.":d.hiddenAvail?" — the availability filter is hiding everyone. Set it back to “All matching employees”.":d.hiddenMatch?" — the skill-match filter is hiding everyone. Set it to “Show everyone” to review gaps.":". Adjust Project Track criteria or send a request to MyNextHire."}</div>`:""}`;
+ updateSelectionCount();
+}
+function selectTop(n){selected.clear();poolData().list.slice(0,n).forEach(e=>selected.add(e.id));renderPoolTable()}
+function toggleEmployee(id,checked){if(checked)selected.add(id);else selected.delete(id);updateSelectionCount()}
+function updateSelectionCount(){const el=document.getElementById("selectionCount");if(el)el.textContent=selected.size+" selected"}
+function viewInterviews(id){
+ const e=emp(id),list=interviewPlans(e);
+ modal("Leads planning to interview · "+e.name,`
+ <div class="note">${list.length} project lead(s) plan to interview this employee. Interview bookings do not reduce monthly availability.</div>
+ <table><thead><tr><th>Project</th><th>Project Lead</th><th>Plan</th></tr></thead>
+ <tbody>${list.map(c=>`<tr><td>${esc(c.project)}</td><td>${esc(c.manager)}</td><td>${c.status==="Interview Booked"?"Interview booked · expires "+dateStr(c.expires):"Booked · interview after project confirmation"}</td></tr>`).join("")}</tbody></table>`,
+ poolRole&&role(poolRole)&&document.getElementById("poolTable")?`<button class="btn" onclick="renderPoolModal()">Back to Pool</button>`:`<button class="btn" onclick="closeModal()">Close</button>`);
+}
+
+/* ---------- SELECTION → POPULATED ROWS ---------- */
+const MODE_TITLE={Direct:"Direct Select",KB:"Send to KB for Skill Upgrading",Interview:"Book for Interview",Book:"Book Employee (soft booking)"};
+function startSelection(mode,bookingId=null){
+ const bc=bookingId?candidate(bookingId):null;
+ if(bc)poolRole=bc.roleId;
+ if(mode!=="Book"&&!canBlock()){toast("Blocking is only allowed at Stage 6 for unconfirmed projects.","bad");return}
+ if(!bc&&!selected.size){toast("Select at least one employee.","warn");return}
+ const req=bc?bc.skills:reqSkills(),ids=bc?[bc.employeeId]:[...selected];
+ let preview="";
+ if(mode==="KB"){
+  if(!req.length){toast("Add at least one skill with a required level before sending to Knowledge Benchmarking.","warn");return}
+  if(NEEDED_BY-day<=0){toast("The project start date has been reached; there is no time left for training.","bad");return}
+  const t=kbTiming(),sm=summarizeGaps(ids.map(id=>({id,ev:evalSkills(emp(id),req)})));
+  preview=`
+  <h3>What will be sent to Knowledge Benchmarking</h3>
+  <div class="stats" style="margin-bottom:12px">
+   <div class="stat"><span>Send date (today)</span><b class="nw" style="font-size:16px">${t.sentDate}</b></div>
+   <div class="stat"><span>Project start</span><b class="nw" style="font-size:16px">${t.startDate}</b></div>
+   <div class="stat"><span>Days between</span><b>${t.total}</b></div>
+   <div class="stat"><span>Training days (85%)</span><b>${t.train}</b></div>
+   <div class="stat"><span>Buffer days (15%)</span><b>${t.buffer}</b></div>
+  </div>
+  <div class="stats" style="margin-bottom:12px">
+   <div class="stat"><span>Employees selected</span><b>${sm.total}</b></div>
+   <div class="stat"><span>Fully matched</span><b>${sm.fully}</b></div>
+   <div class="stat"><span>One skill gap</span><b>${sm.one}</b></div>
+   <div class="stat"><span>Two or more gaps</span><b>${sm.multi}</b></div>
+  </div>
+  ${sm.groups.length?`<div class="note"><b>Skill gaps to be trained:</b><br>${sm.groups.map(g=>`• ${esc(g.skill)}: ${esc(g.currentLevel)} → ${esc(g.targetLevel)} · ${g.employees} employee(s)`).join("<br>")}</div>`
+   :`<div class="note">Every selected employee already matches all required skills. No training request will be sent; you can select directly or book an interview afterwards.</div>`}`;
+ }
+ const modeNote={
+  Direct:"Hours are assigned exactly as entered. After the final capacity check passes, the employee appears on the project as a normal allocated row and hours are deducted now.",
+  KB:"Enter proposed monthly effort. Hours are not deducted until final selection. The row shows the KB result and training window.",
+  Interview:`Booking an interview deducts no hours. The booking expires after ${EXPIRY_DAYS} days and the lead is notified. The number of leads planning to interview each employee is shown below.`,
+  Book:"A booking is a soft selection of an ideal candidate. No hours are deducted, no hold and no block. Hours entered here are indicative planning hours only."
+ }[mode];
+ const showPlans=mode==="Interview";
+ modal(MODE_TITLE[mode],`
+ ${preview}
+ <div class="note">${modeNote}</div>
+ <div class="scroll"><table><thead><tr><th>Employee</th>${req.length?"<th>Skill match</th>":""}${showPlans?"<th>Leads planning interview</th>":""}${MONTHS.map(m=>`<th>${m}</th>`).join("")}</tr></thead>
+ <tbody>${ids.map(id=>{const e=emp(id);return `<tr><td><b>${esc(e.name)}</b><br><small>${e.id}</small></td>
+ ${req.length?`<td>${skillChips(evalSkills(e,req))}</td>`:""}
+ ${showPlans?`<td><b>${interviewPlans(e).length}</b> lead(s)</td>`:""}
+ ${MONTHS.map((m,i)=>{const a=available(e,i)??0,pre=bc?bc.hours[i]:70,v=Math.max(0,Math.min(pre,a));
+  return `<td><input type="number" style="width:76px" id="hours_${id}_${i}" min="0" max="${Math.max(0,a)}" value="${v}"><br><small>avail ${a}h</small></td>`}).join("")}</tr>`}).join("")}</tbody></table></div>`,
+ `<button class="btn" onclick="${bc?"closeModal()":"renderPoolModal()"}">${bc?"Cancel":"Back"}</button>
+ <button class="btn primary" onclick='commitSelection(${JSON.stringify(mode)},${JSON.stringify(ids)},${JSON.stringify(bookingId)})'>Confirm</button>`);
+}
+function commitSelection(mode,ids,bookingId=null){
+ const bc=bookingId?candidate(bookingId):null;
+ if(bc)poolRole=bc.roleId;
+ const r=role(poolRole),req=bc?bc.skills:reqSkills(),plans=[];
+ if(mode!=="Book"&&!canBlock()){toast("Blocking is only allowed at Stage 6 for unconfirmed projects.","bad");return}
+ for(const id of ids){
+  const e=emp(id);
+  const hours=MONTHS.map((_,i)=>Number(document.getElementById(`hours_${id}_${i}`).value));
+  if(hours.some((h,i)=>!Number.isFinite(h)||h<0||h>CAPACITY||available(e,i)===null||h>available(e,i))){toast("Invalid hours or insufficient availability for "+e.name,"bad");return}
+  plans.push({id,hours,ev:evalSkills(e,req)});
+ }
+ if(bc)r.candidates=r.candidates.filter(x=>x.id!==bookingId);
+ const criteria={primary:r.primary,secondary:r.secondary,department:r.department,location:r.location,country:r.country,grade:r.grade};
+ const sm=mode==="KB"?summarizeGaps(plans.map(p=>({id:p.id,ev:p.ev}))):null;
+ let reqObj=null;
+ if(sm&&sm.need.length){
+  const n=sequence++;
+  reqObj={id:"KB-REQ-"+n,project:lead().project,projectId:lead().projectId,projectLead:lead().name,role:r.primary+" / "+r.secondary,projectEnd:"30 Jun 2027",
+   selectedCount:sm.total,counts:{fullyMatched:sm.fully,oneGap:sm.one,twoOrMoreGaps:sm.multi},skillGaps:sm.groups,employees:[],candidateIds:[],status:"Pending"};
+  kbRequests.unshift(reqObj);
+ }
+ const created=[];
+ for(const p of plans){
+  const e=emp(p.id),gaps=p.ev.filter(i=>!i.ok).map(i=>({skill:i.name,currentLevel:i.current||"Not in DB",targetLevel:i.required}));
+  const needs=mode==="KB"&&gaps.length>0;
+  const status=mode==="Book"?"Booked":mode==="Interview"?"Interview Booked":mode==="Direct"?"Skills Matched":needs?"KB Pending":"Skills Matched";
+  const c={
+   id:"CAND-"+sequence++,employeeId:p.id,projectId:lead().projectId,project:lead().project,manager:lead().name,roleId:r.id,
+   status,route:mode,hours:p.hours,skills:req.map(s=>({...s})),criteria:{...criteria},
+   expires:day+EXPIRY_DAYS,reason:"",training:needs?{gaps}:null,requestId:needs?reqObj.id:null,trained:false,isNew:true,
+   ivPlan:"",interviewPassed:false
+  };
+  r.candidates.push(c);created.push(c);
+  if(needs){
+   reqObj.candidateIds.push(c.id);
+   reqObj.employees.push({employeeId:e.id,name:e.name,grade:e.grade,department:e.department,location:e.location,country:e.country,capability:e.primary+" / "+e.secondary,gaps});
+  }
+ }
+ if(reqObj&&kbOnline)applyTiming(reqObj);
+ closeModal();
+ if(mode==="Direct"){
+  let ok=0;created.forEach(c=>{if(confirmCandidate(c))ok++});
+  if(!ok)log("Direct selection could not be completed; rows remain as Skills Matched for another attempt.");
+  return;
+ }
+ let msg=plans.length+" employee row(s) added to "+r.primary+" / "+r.secondary+" via "+MODE_TITLE[mode]+".";
+ if(mode==="Book")msg+=" Soft booking: no hours deducted, no hold, no block.";
+ if(mode==="Interview")msg+=" Interview expires "+dateStr(day+EXPIRY_DAYS)+". "+created.map(c=>emp(c.employeeId).name+": "+interviewPlans(emp(c.employeeId)).length+" lead(s) planning interview").join("; ")+".";
+ if(sm){
+  msg+=" Skill check: "+sm.fully+" fully matched, "+sm.one+" with one gap, "+sm.multi+" with two or more gaps.";
+  if(reqObj)msg+=kbOnline?" Training request "+reqObj.id+" sent to KB on "+reqObj.sentDate+": "+reqObj.trainingDays+" training days + "+reqObj.bufferDays+" buffer days (project starts "+reqObj.projectStart+").":" KB service unavailable: request "+reqObj.id+" is pending.";
+ }
+ log(msg);
+ toast(reqObj?(kbOnline?"Training request sent to Knowledge Benchmarking.":"KB unavailable — request pending."):mode==="Book"?"Booked. No hours deducted.":"Project Track rows populated for "+plans.length+" employee(s).",reqObj&&!kbOnline?"warn":"ok");
+}
+
+/* ---------- KNOWLEDGE BENCHMARKING ---------- */
+function applyTiming(rq){
+ const t=kbTiming();
+ Object.assign(rq,{status:"Sent",sentDay:day,sentDate:t.sentDate,projectStart:t.startDate,daysToProjectStart:t.total,trainingDays:t.train,bufferDays:t.buffer,split:"85% training / 15% buffer"});
+ rq.candidateIds.forEach(id=>{
+  const c=candidate(id);if(!c||c.status!=="KB Pending")return;
+  c.status="Training";
+  Object.assign(c.training,{sentDay:day,trainingEnd:day+t.train,deadline:NEEDED_BY,trainingDays:t.train,bufferDays:t.buffer});
+ });
+}
+function toggleKB(){kbOnline=!kbOnline;log("KB service set to "+(kbOnline?"ONLINE":"OFFLINE")+".");toast("KB service "+(kbOnline?"online":"offline"),kbOnline?"ok":"warn")}
+function retryRequest(reqId){
+ const rq=kbRequests.find(x=>x.id===reqId);if(!rq||rq.status!=="Pending")return;
+ if(!kbOnline){toast("KB service is still unavailable — request stays pending.","warn");return}
+ if(NEEDED_BY-day<=0){toast("The project start date has been reached; training is no longer possible.","bad");return}
+ applyTiming(rq);
+ log("KB request "+rq.id+" sent on retry ("+rq.sentDate+"): "+rq.trainingDays+" training days + "+rq.bufferDays+" buffer days, recalculated from today.");
+ toast("Request sent to Knowledge Benchmarking.","ok");
+}
+function retryRequestFor(candId){const c=candidate(candId);if(c&&c.requestId)retryRequest(c.requestId)}
+function viewPayload(reqId){
+ const rq=kbRequests.find(x=>x.id===reqId);
+ const {candidateIds,...payload}=rq;
+ modal("Payload · "+rq.id,`<div class="note">This is the synthetic data Resource Vision sends to Knowledge Benchmarking for this request.</div><pre>${esc(JSON.stringify(payload,null,2))}</pre>`,
+  `<button class="btn" onclick="closeModal()">Close</button>`);
+}
+function completeTraining(id){
+ const c=candidate(id),e=emp(c.employeeId);
+ if(day>c.training.deadline){c.status="Training Delayed";log("Training for "+e.name+" finished after the project start. Provisional hold released; search again.");return}
+ c.training.gaps.forEach(g=>{
+  const key=skillKey(g.skill);
+  (skillDb[e.id]=skillDb[e.id]||{})[key]=g.targetLevel;
+  skillUpdates.unshift({day,employee:e.name,employeeId:e.id,skill:g.skill,from:g.currentLevel,to:g.targetLevel,project:c.project});
+ });
+ c.trained=true;c.status="Skills Matched";
+ log("Training completed for "+e.name+". Shared skills database updated; select directly or book an interview.");
+ toast("Training complete. Skills database updated.","ok");
+}
+function failTraining(id){const c=candidate(id);c.status="Training Failed";log("Training failed for "+emp(c.employeeId).name+". Provisional hold released; search again.")}
+function dismiss(id){
+ const c=candidate(id),was=c.status;c.status=was==="Booked"?"Released":"Closed";c.reason=was==="Booked"?"Booking released by lead":"";
+ log((was==="Booked"?"Booking released for ":"Candidate row closed for ")+emp(c.employeeId).name+".");
+}
+function renderKB(){
+ const queue=allCandidates().filter(c=>c.requestId);
+ const count=f=>queue.filter(f).length;
+ document.getElementById("kbServiceChip").innerHTML=`<span class="chip ${kbOnline?"ok":"warn"}" style="${kbOnline?"":"color:#935f0a"}">${kbOnline?"KB service online":"KB service offline"}</span>`;
+ document.getElementById("kbStats").innerHTML=[
+  ["Requests sent",kbRequests.filter(x=>x.status==="Sent").length],
+  ["Pending (KB offline)",kbRequests.filter(x=>x.status==="Pending").length],
+  ["In training",count(c=>c.status==="Training")],
+  ["Training completed",count(c=>c.trained)],
+  ["Skills DB updates",skillUpdates.length]
+ ].map(([k,v])=>`<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("");
+ document.getElementById("kbReqRows").innerHTML=kbRequests.map(q=>{
+  const sent=q.status==="Sent";
+  return `<tr><td><b class="nw">${esc(q.id)}</b><br><small>${esc(q.role)}</small></td><td>${esc(q.project)}</td>
+  <td class="nw">${sent?esc(q.sentDate)+"<br><small>day "+q.sentDay+" (today)</small>":'<span class="muted">—</span>'}</td>
+  <td class="nw">${sent?esc(q.projectStart):'<span class="muted">—</span>'}</td>
+  <td>${sent?q.daysToProjectStart:'<span class="muted">—</span>'}</td>
+  <td>${sent?`<span class="tag info">${q.trainingDays} training</span> <span class="tag mute">${q.bufferDays} buffer</span>`:'<span class="muted">Calculated on send</span>'}</td>
+  <td>${q.selectedCount} selected<br><small>${q.counts.fullyMatched} matched · ${q.counts.oneGap} one gap · ${q.counts.twoOrMoreGaps} two+ gaps</small></td>
+  <td><div class="chips">${q.skillGaps.map(g=>`<span class="sk bad">${esc(g.skill)} <em>${esc(g.currentLevel)} → ${esc(g.targetLevel)}</em> <u>×${g.employees}</u></span>`).join("")}</div></td>
+  <td>${tag(sent?"Sent to KB":"Pending – KB unavailable",sent?"ok":"warn")}</td>
+  <td><div class="acts">${sent?"":`<button class="btn sm primary" onclick="retryRequest('${q.id}')">Retry send</button>`}<button class="btn sm" onclick="viewPayload('${q.id}')">View payload</button></div></td></tr>`;
+ }).join("")||`<tr><td colspan="10" class="muted">No requests yet. Select employees on the Project Details tab and choose <b>Send to KB for Skill Upgrading</b>.</td></tr>`;
+ document.getElementById("kbRows").innerHTML=queue.map(c=>{
+  const e=emp(c.employeeId),tr=c.training;
+  const gaps=`<div class="chips">${tr.gaps.map(g=>`<span class="sk ${c.trained?"ok":"bad"}"><i>${c.trained?"✓":"✗"}</i>${esc(g.skill)} <em>${esc(g.currentLevel)} → ${esc(g.targetLevel)}</em></span>`).join("")}</div>`;
+  const win=tr.trainingEnd!=null?`Sent ${dateStr(tr.sentDay)}<br><small>training ends ${dateStr(tr.trainingEnd)} · buffer until ${dateStr(tr.deadline)}</small>`:'<span class="muted">Not started</span>';
+  const act=c.status==="Training"?`<div class="acts"><button class="btn sm primary" onclick="completeTraining('${c.id}')">Complete Training</button><button class="btn sm danger" onclick="failTraining('${c.id}')">Mark Failed</button></div>`
+   :c.status==="KB Pending"?`<button class="btn sm primary" onclick="retryRequest('${c.requestId}')">Retry send</button>`:`<span class="muted">${esc(c.status)}</span>`;
+  return `<tr><td><b>${esc(e.name)}</b><br><small>${e.id}</small></td><td>${esc(c.project)}</td><td>${gaps}</td><td>${win}</td><td>${tag(c.status)}</td><td>${act}</td></tr>`;
+ }).join("")||`<tr><td colspan="6" class="muted">Nobody is in the training queue.</td></tr>`;
+ document.getElementById("skillUpdateRows").innerHTML=skillUpdates.map(u=>`<div class="event"><b>${esc(u.employee)}</b> · ${esc(u.skill)}: ${esc(u.from)} → <b>${esc(u.to)}</b> <small>· ${dateStr(u.day)} · ${esc(u.project)} · visible to every project lead</small></div>`).join("")||'<p class="muted">No skill levels have been updated yet.</p>';
+ document.getElementById("kbFeedbackRows").innerHTML=kbFeedback.map(f=>`<div class="event"><b>${esc(f.employee)}</b> · ${esc(f.project)} · ${dateStr(f.day)}<br><small>${esc(f.reason)} — flagged for optional KB review</small></div>`).join("")||'<p class="muted">No technical rejection feedback.</p>';
+}
+
+/* ---------- INTERVIEW / FINAL ---------- */
+function bookInterview(id){
+ const c=candidate(id),e=emp(c.employeeId);
+ if(!["Skills Matched","Expired","Released"].includes(c.status))return;
+ if(!canBlock()){toast("Blocking is only allowed at Stage 6 for unconfirmed projects.","bad");return}
+ const bad=c.hours.findIndex((h,i)=>h>(available(e,i)??-1));
+ if(bad>=0){toast("Capacity conflict in "+MONTHS[bad]+": another project confirmed this employee.","bad");return}
+ c.status="Interview Booked";c.expires=day+EXPIRY_DAYS;
+ log("Interview booked for "+e.name+" (expires "+dateStr(c.expires)+"). "+interviewPlans(e).length+" lead(s) planning interview. Availability unchanged.");
+}
+function planLater(id){
+ const c=candidate(id);c.ivPlan="later";
+ log("Interview for "+emp(c.employeeId).name+" will happen after the project is confirmed (booking stays soft).");
+}
+function openInterview(id){
+ const c=candidate(id),e=emp(c.employeeId),booking=c.status==="Booked";
+ if(c.status==="Interview Booked"&&c.expires<=day){c.status="Expired";log("Expire Hold: interview booking for "+e.name+" expired. Notification sent to "+c.manager+".");toast("Interview booking expired.","warn");return}
+ modal("Interview · "+e.name,`
+ <div class="note">${booking?"This is a soft booking. The interview does not block hours. If passed, the booking is marked interview-passed and can be blocked directly at Stage 6.":"Interview bookings do not deduct availability. The first valid final confirmation receives the capacity."}</div>
+ <div class="note"><b>${interviewPlans(e).length}</b> project lead(s) plan to interview this employee.</div>
+ ${c.skills.length?`<div class="skillbox"><h3>Skill match from the shared database</h3>${skillChips(evalSkills(e,c.skills))}</div>`:""}
+ <div class="grid2">
+  <label>Rejection type<select id="rejType"><option>Technical</option><option>Non-technical</option></select></label>
+ </div>
+ <label style="margin-top:10px">Interview Feedback / Rejection Reason<textarea id="feedback" placeholder="Enter feedback (mandatory for rejection)"></textarea></label>`,
+ `<button class="btn" onclick="closeModal()">Cancel</button>
+ <button class="btn danger" onclick="rejectCandidate('${id}')">Reject</button>
+ ${booking?`<button class="btn primary" onclick="passBooking('${id}')">Passed · Mark Booking</button>`:`<button class="btn primary" onclick="finalize('${id}')">Select for Project</button>`}`);
+}
+function passBooking(id){
+ const c=candidate(id);c.interviewPassed=true;c.ivPlan="done";closeModal();
+ log("Interview passed for "+emp(c.employeeId).name+" during booking. Booking stays soft; at Stage 6 the employee can be blocked directly.");
+}
+function rejectCandidate(id){
+ const c=candidate(id),e=emp(c.employeeId);
+ const reason=(document.getElementById("feedback")?.value||"").trim();
+ if(!reason){toast("Enter a rejection reason.","warn");return}
+ const type=document.getElementById("rejType")?.value||"Non-technical";
+ const wasBooking=c.status==="Booked";
+ c.status="Rejected";c.reason=reason;c.rejectType=type;
+ if(type==="Technical")kbFeedback.unshift({employee:e.name,project:c.project,day,reason});
+ closeModal();
+ log(e.name+" rejected ("+type+"): "+reason+(wasBooking?" Booking released.":"")+(type==="Technical"?" Feedback sent to KB.":""));
+}
+/* Final capacity/identity/contract check, then atomic confirmation. */
+function confirmCandidate(c){
+ const e=emp(c.employeeId);
+ if(!canBlock()){toast("Blocking is only allowed at Stage 6 for unconfirmed projects.","bad");return false}
+ if(!e.identityValid){toast("Employee identity could not be verified.","bad");return false}
+ if(c.hours.some((h,i)=>h>(available(e,i)??-1))){toast("Final capacity check failed. Another project may have confirmed this employee.","bad");return false}
+ c.hours.forEach((hours,month)=>{if(hours>0)e.confirmed.push({candidateId:c.id,month,hours})});
+ c.status="Confirmed";
+ const released=[];
+ allCandidates().filter(x=>x.id!==c.id&&x.employeeId===e.id&&x.status==="Interview Booked").forEach(x=>{
+  if(x.hours.some((h,i)=>h>(available(e,i)??-1))){x.status="Released";x.reason="Capacity confirmed on "+c.project;released.push(x.project)}
+ });
+ log(e.name+" confirmed for "+c.project+(c.route==="Direct"?" by direct selection":"")+". Hours deducted now."+(released.length?" Competing interview bookings released: "+released.join(", ")+".":""));
+ toast(e.name+" allocated to "+c.project,"ok");
+ return true;
+}
+function finalize(id){
+ const c=candidate(id),e=emp(c.employeeId);
+ if(!["Interview Booked","Skills Matched"].includes(c.status)){toast("Candidate is not eligible for final selection.","warn");return}
+ if(c.status==="Interview Booked"&&c.expires<=day){c.status="Expired";closeModal();log("Expire Hold: interview booking for "+e.name+" expired before selection. Notification sent to "+c.manager+".");return}
+ closeModal();
+ confirmCandidate(c);
+}
+
+/* ---------- CLOCK ---------- */
+function advanceDay(n=1){
+ day+=n;
+ allCandidates().forEach(c=>{
+  if(c.status==="Interview Booked"&&c.expires<=day){
+   c.status="Expired";
+   audit.unshift({day,lead:c.manager,message:"Expire Hold: interview booking for "+emp(c.employeeId).name+" ("+c.project+") expired after "+EXPIRY_DAYS+" days. Notification sent to "+c.manager+"."});
+  }
+  if(c.status==="Training"&&day>c.training.deadline)c.status="Training Delayed";
+ });
+ log("Demo clock advanced "+n+" day(s) to "+dateStr(day)+". Expired interview bookings released; training past the project start marked delayed.");
+}
+function advanceMonth(){reportingMonth=Math.min(5,reportingMonth+1);log("Reporting month advanced to "+MONTHS[reportingMonth])}
+
+/* ---------- MNH ---------- */
+function hiringForm(){
+ modal("MyNextHire · Staffing Request",`
+ <div class="warning">MNH fields and approval ownership are not finalized. This is a simulated request only.</div>
+ <div class="grid2">
+  <label>Capability<select id="hireCap">${options(Object.keys(CATALOG))}</select></label>
+  <label>Headcount<input id="hireCount" type="number" value="1" min="1"></label>
+  <label>Justification<input id="hireWhy" value="Internal staffing shortage"></label>
+ </div>`,
+ `<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="submitHiring()">Send to MyNextHire</button>`);
+}
+function submitHiring(){
+ const count=Number(document.getElementById("hireCount").value);
+ if(!Number.isInteger(count)||count<1){toast("Invalid headcount.","bad");return}
+ const h={id:"MNH-SYN-"+sequence++,project:lead().project,manager:lead().name,capability:document.getElementById("hireCap").value,count,reason:document.getElementById("hireWhy").value,status:"Request sent to MyNextHire"};
+ hiring.push(h);closeModal();log(h.id+" sent to MyNextHire (simulated).");
+ toast("Request sent to MyNextHire.","ok");
+}
+
+/* ---------- RENDER ---------- */
+function renderAvailability(){
+ const q=(document.getElementById("availabilitySearch").value||"").toLowerCase();
+ const list=employees.filter(e=>!q||(e.name+" "+e.id).toLowerCase().includes(q));
+ document.getElementById("stats").innerHTML=[
+  ["Synthetic employees",fmt(employees.length)],
+  ["Interview bookings",allCandidates().filter(c=>c.status==="Interview Booked").length],
+  ["Soft bookings",allCandidates().filter(c=>c.status==="Booked").length],
+  ["Available hours",fmt(employees.reduce((s,e)=>s+Math.max(0,available(e,reportingMonth)||0),0))]
+ ].map(([k,v])=>`<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("");
+ document.getElementById("availabilityShown").textContent="Showing "+Math.min(140,list.length)+" of "+fmt(list.length)+" employees (use search to narrow)";
+ document.getElementById("availabilityRows").innerHTML=list.slice(0,140).map(e=>{
+  const ip=interviewPlans(e).length,bk=bookedOn(e).length;
+  return `<tr><td><b>${esc(e.name)}</b><br><small>${e.id}</small></td><td>${esc(e.secondary)}</td><td>${esc(workStatus(e))}</td>
+ <td>${official(e,reportingMonth)}h</td>
+ <td>${ip?`<button class="btn sm" onclick="viewInterviews('${e.id}')">${ip} lead(s) · View</button>`:"0"}</td>
+ <td>${bk?`<span class="tag teal">${bk} booking(s)</span>`:"0"}</td>
+ <td><b>${available(e,reportingMonth)??"Unverified"}</b></td></tr>`}).join("");
+}
+function renderAll(){
+ const l=lead(),unc=isUnconf(),st=stage();
+ document.getElementById("projectTitle").textContent="Manage Project · "+l.project;
+ document.getElementById("projectSubtitle").textContent=l.projectId+" · Synthetic project";
+ document.getElementById("empCount").textContent=fmt(employees.length)+" synthetic employees";
+ const pc=document.getElementById("projChip");
+ pc.textContent=unc?"Unconfirmed · Stage "+st:"Confirmed Project";
+ pc.className="chip "+(unc?(st>=6?"warn":"teal"):"ok");
+ document.getElementById("statusChip").textContent=unc?(st>=6?"Stage 6 · Booking and blocking":"Stage "+st+" · Booking only"):"Confirmed";
+ document.getElementById("statusChip").className="chip "+(unc?(st>=6?"warn":"teal"):"ok");
+ document.getElementById("engagement").innerHTML=[
+  ["Proposal","SYN-OPP-"+l.id],["Account","Fictional Client "+l.id],["Project Lead",l.name],["Business Delivery Unit","Data & AI"],
+  ["Project Start","01 Jan 2027"],["Project End","30 Jun 2027"],["Contract","T&M - Hours"],["Status",unc?"Unconfirmed · Stage "+st+" of 6":"Confirmed"]
+ ].map(([k,v])=>`<div><small>${esc(k)}</small><b>${esc(v)}</b></div>`).join("");
+ renderStage();
+ document.getElementById("modeNote").innerHTML=unc
+  ?`Unconfirmed project. In <b>stages 1–5</b> you can only <b>book</b>: select the ideal candidates by availability and skills without deducting hours. You can interview a booked employee now or after the project is confirmed. At <b>stage 6</b> you can also <b>block</b>: Direct Select, Send to KB for Skill Upgrading or Book for Interview. A booked employee who already passed an interview goes straight to hours entry and the final check.`
+  :`Confirmed project. Set the capability, department, location, country and grade on a role row, then click <b>Select Employee ▾</b>. Type the required skills and levels; the shared skills database shows green ✓ or red ✗ per employee. Then choose <b>Direct Select</b> (hours assigned as entered), <b>Send to KB for Skill Upgrading</b> or <b>Book for Interview</b>.`;
+ document.getElementById("signedIn").innerHTML=`<b>${esc(l.name)}</b><br><small>${esc(l.project)} · ${unc?"Unconfirmed, stage "+st:"Confirmed"}</small>`;
+ document.getElementById("clock").textContent="Day "+day+" · "+MONTHS[reportingMonth]+" 2027 reporting";
+ document.getElementById("clockDate").textContent="Today: "+dateStr(day)+" · "+Math.max(0,NEEDED_BY-day)+" day(s) to project start";
+ document.getElementById("neededBy").textContent=NEEDED_BY;
+ document.getElementById("kbSwitchLabel").innerHTML=`<span><span class="dot ${kbOnline?"on":"off"}"></span>KB service ${kbOnline?"online":"offline"}</span>`;
+ const cs=allCandidates();
+ document.getElementById("counts").innerHTML=`${cs.length} candidate records<br>${cs.filter(c=>c.status==="Booked").length} soft bookings<br>${cs.filter(c=>c.status==="Training").length} in KB training<br>${cs.filter(c=>c.status==="KB Pending").length} waiting for KB<br>${cs.filter(c=>c.status==="Interview Booked").length} interview bookings<br>${cs.filter(c=>c.status==="Confirmed").length} confirmed allocations<br>${kbRequests.length} KB request(s) · ${skillUpdates.length} skills DB update(s)`;
+ const pend=cs.filter(c=>c.status==="KB Pending"||c.status==="Training").length,bd=document.getElementById("kbBadge");
+ bd.textContent=pend;bd.classList.toggle("zero",!pend);
+ renderRoles();renderAvailability();renderKB();
+ document.getElementById("rejectedRows").innerHTML=roles().flatMap(r=>r.candidates).filter(c=>c.status==="Rejected")
+  .map(c=>`<div class="event"><b>${esc(emp(c.employeeId).name)}</b> · ${esc(c.reason)} <span class="tag mute">${esc(c.rejectType||"")}</span></div>`).join("")||'<p class="muted">No rejected candidates.</p>';
+ document.getElementById("hiringRows").innerHTML=hiring.map(h=>`<div class="event">${esc(h.id)} · ${esc(h.project)} · ${esc(h.capability)} × ${h.count} · ${esc(h.status)}</div>`).join("")||'<p class="muted">No hiring requests.</p>';
+ document.getElementById("auditRows").innerHTML=audit.map(a=>`<div class="event">${esc(a.message)}<br><small>${dateStr(a.day)} (day ${a.day}) · ${esc(a.lead)}</small></div>`).join("");
+}
+function exportAudit(){
+ const blob=new Blob([JSON.stringify({synthetic:true,audit,rolesByProject,hiring,kbFeedback,kbRequests,skillUpdates,stages},null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="synthetic_resource_vision_audit.json";a.click();URL.revokeObjectURL(a.href);
+}
+function resetDemo(){
+ employees=makeEmployees();empMap=new Map(employees.map(e=>[e.id,e]));
+ rolesByProject={};audit=[];hiring=[];kbFeedback=[];kbRequests=[];skillDb={};skillUpdates=[];
+ stages={};LEADS.forEach(l=>{if(l.type==="Unconfirmed")stages[l.id]=l.stage0});
+ activeLead="L0";day=0;reportingMonth=0;sequence=1;kbOnline=true;selected.clear();
+ closeModal();addRole(false);log("Synthetic simulator initialized with "+fmt(employees.length)+" employees.");toast("Demo reset. All data is synthetic.","ok");
+}
+resetDemo();
+</script>
+</body>
+</html>

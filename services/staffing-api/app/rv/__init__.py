@@ -1,0 +1,1 @@
+"""Azure-backed availability read path (same shape as resource_vision_poc)."""

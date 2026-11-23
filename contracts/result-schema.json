@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://resource-vision.local/contracts/result-schema.json",
+  "title": "ResourceVisionPoolsResult",
+  "type": "object",
+  "required": ["status"],
+  "properties": {
+    "status": { "enum": ["completed", "cancelled", "error"] },
+    "demand_id": { "type": "string", "format": "uuid" },
+    "reservations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reservation_id": { "type": "string", "format": "uuid" },
+          "employee_key": { "type": "string" },
+          "state": { "type": "string" }
+        }
+      }
+    },
+    "message": { "type": "string" }
+  }
+}

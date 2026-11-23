@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://resource-vision.local/contracts/launch-schema.json",
+  "title": "ResourceVisionPoolsLaunch",
+  "type": "object",
+  "required": [
+    "project_id",
+    "start_date",
+    "end_date",
+    "launch_token",
+    "callback_origin"
+  ],
+  "properties": {
+    "project_id": { "type": "string" },
+    "proposal_number": { "type": ["integer", "string"] },
+    "sub_project_name": { "type": "string" },
+    "position_id": { "type": "string" },
+    "project_status": { "type": "string", "description": "e.g. confirmed (D20)" },
+    "start_date": { "type": "string", "format": "date" },
+    "end_date": { "type": "string", "format": "date" },
+    "filters": {
+      "type": "object",
+      "properties": {
+        "primary_capability": { "type": "array", "items": { "type": "string" } },
+        "secondary_capability": { "type": "array", "items": { "type": "string" } },
+        "department": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "array", "items": { "type": "string" } },
+        "country": { "type": "array", "items": { "type": "string" } },
+        "grade": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "required_skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "level"],
+        "properties": {
+          "name": { "type": "string" },
+          "level": { "type": "string" }
+        }
+      }
+    },
+    "month_hours": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["month_key", "hours"],
+        "properties": {
+          "month_key": { "type": "string", "format": "date" },
+          "hours": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "launch_token": { "type": "string" },
+    "callback_origin": { "type": "string" }
+  }
+}

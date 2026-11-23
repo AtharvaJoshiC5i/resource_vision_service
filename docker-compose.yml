@@ -1,0 +1,5 @@
+# Optional local tooling only. Production data and staffing state live in Azure SQL.
+# Run sql/staffing_schema.sql against the shared database before first use.
+services:
+  placeholder:
+    image: hello-world
