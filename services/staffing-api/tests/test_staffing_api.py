@@ -70,6 +70,17 @@ def test_launch_token_validation(client, token):
     assert bad.status_code == 401
 
 
+def test_pool_month_without_project_track_shows_fully_available(client, token):
+    """Future months with no PT row are planned as fully available until effort data exists."""
+    far = [{"month_key": "2028-04-01", "hours": 40}]
+    data = _search(client, token, month_hours=far)
+    assert data["employees"], "demo pool must return employees"
+    cell = data["employees"][0]["months"][0]
+    assert cell["status"] == "Fully Available"
+    assert cell["bookable_hours"] == 176.0
+    assert cell.get("status_source") == "assumed_available"
+
+
 def test_pools_search_shape(client, token):
     data = _search(client, token, required_skills=[{"name": "python", "level": "Applied"}])
     assert data["employees"]

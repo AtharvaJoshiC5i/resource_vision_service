@@ -139,15 +139,20 @@ def employee_availability(key: str):
     emp = snap.employees.get(key.upper())
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
+    from rv_availability.staffing.month_view import staffing_month_view
+
     months = []
     for m in snap.window:
         em = snap.employee_months.get((emp.key, m))
+        view = staffing_month_view(em, emp)
         months.append(
             {
                 "month": m,
-                "status": em.status if em else "No record",
-                "remaining": em.remaining if em else None,
-                "planned": em.planned if em else None,
+                "status": view.status,
+                "remaining": view.remaining,
+                "planned": view.planned,
+                "bookable_hours": view.bookable_hours,
+                "status_source": view.source,
             }
         )
     return {"employee": {"key": emp.key, "code": emp.code, "name": emp.name}, "months": months}

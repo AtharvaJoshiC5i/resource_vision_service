@@ -10,7 +10,7 @@ All values are computed live by parameterised, read-only SQL. No derived tb_* ta
 |---|----------|
 | D1 | Capacity is **176 h** for every employed employee-month (config constant; `rv_CapacityRule` is empty). Partial months also get 176. |
 | D2 | **Window** = current month + next 18 months (19 months), computed from the server date. Months with no PT rows at all render **blank** and fill in when data arrives. |
-| D3 | (v2) Explicit zero effort is a valid value. An employee-month whose PT rows are all zero (none unresolved) has 0 planned hours and is **Fully Available** with 176 h remaining, if identity is reliable. A month with no PT row stays **No record**. |
+| D3 | (v2) Explicit zero effort is a valid value. An employee-month whose PT rows are all zero (none unresolved) has 0 planned hours and is **Fully Available** with 176 h remaining, if identity is reliable. A month with no PT row stays **No record** on the availability dashboard. **Staffing pools** use `staffing_month_view`: same missing row is shown as **Fully Available** at full bookable capacity until a PT employee-month row appears. |
 | D4 | `included_default` is **not used anywhere**. |
 | D5 | "Active Projects" is **date-based**: project start <= today <= end. |
 | D6 | Slicers are multi-select; default = everything in the window. |

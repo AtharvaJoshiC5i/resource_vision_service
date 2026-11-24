@@ -15,6 +15,7 @@ type AvailabilityMonth = {
   status: string;
   remaining: number | null;
   planned: number | null;
+  bookable_hours?: number;
 };
 
 function poolRowFromAvailability(

@@ -13,7 +13,12 @@ def bench_class(
     """Handoff §10.2 draft bench classes."""
     month = current_month if current_month is not None else snap.window[0]
     em = snap.employee_months.get((emp.key, month))
-    status = em.status if em else "No record"
+    if em is not None:
+        status = em.status
+    elif emp.hr_matched and emp.dates_valid:
+        status = e.FULLY_AVAILABLE
+    else:
+        status = e.UNVERIFIED
 
     if status in (e.FULLY_COMMITTED, e.OVER_ALLOCATED):
         return "In Project"

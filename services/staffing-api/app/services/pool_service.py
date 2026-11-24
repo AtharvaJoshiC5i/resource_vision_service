@@ -4,7 +4,7 @@ from datetime import date
 
 from rv_availability import engine as e
 from rv_availability import views as v
-from rv_availability.staffing.bookable_hours import bookable_hours_for_month
+from rv_availability.staffing.month_view import staffing_month_view
 from rv_availability.staffing.launch_filters import (
     filters_from_launch_payload,
     launch_filters_empty,
@@ -84,14 +84,16 @@ def _month_cells(snap, emp_key: str, months: list[int], reserved) -> list[dict]:
     for m in months:
         em = snap.employee_months.get((emp.key, m))
         res = reserved.get((emp.key, m), 0.0)
-        bookable = bookable_hours_for_month(em, emp, reserved_hours=res)
+        view = staffing_month_view(em, emp, reserved_hours=res)
         cells.append(
             {
                 "month_key": m,
                 "label": v.month_label(m),
-                "status": em.status if em else "No record",
-                "remaining": em.remaining if em else None,
-                "bookable_hours": bookable,
+                "status": view.status,
+                "remaining": view.remaining,
+                "planned": view.planned,
+                "bookable_hours": view.bookable_hours,
+                "status_source": view.source,
             }
         )
     return cells
