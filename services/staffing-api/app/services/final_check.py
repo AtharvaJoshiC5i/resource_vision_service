@@ -8,7 +8,7 @@ from app.staffing_store import CandidateRow, StaffingStore, month_key_to_int
 
 def final_check(store: StaffingStore, candidate: CandidateRow, ports) -> dict:
     """Re-validate bookable hours against the freshest snapshot plus all active reservations."""
-    # Cheap freshness gate: re-read the rv2 version marker (reload only if it changed).
+    # Cheap freshness gate: re-read the version marker / change fingerprint (reload only if it changed).
     snap = get_availability_snapshot(fresh=True)
     emp = snap.employees.get(candidate.employee_key.upper())
     if not emp:

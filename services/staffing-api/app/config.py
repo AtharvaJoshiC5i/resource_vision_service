@@ -3,7 +3,7 @@ from functools import lru_cache
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_RV_SOURCES = frozenset({"azure", "azure_raw", "demo"})
+_RV_SOURCES = frozenset({"azure", "azure_raw", "source_tables", "demo"})
 _STAFFING_STORES = frozenset({"azure", "memory"})
 
 
@@ -38,10 +38,10 @@ class Settings(BaseSettings):
     """Primary switch: `azure` (Azure SQL) or `demo` (synthetic). Overrides RV_DATA_SOURCE when set."""
     rv_data_mode: str | None = Field(default=None, validation_alias="RV_DATA_MODE")
     rv_data_source: str = Field(default="azure", validation_alias="RV_DATA_SOURCE")
-    staffing_persistence: str = Field(
-        default="azure",
+    staffing_persistence: str | None = Field(
+        default=None,
         validation_alias="STAFFING_PERSISTENCE",
-        description="azure | memory (memory for unit tests only)",
+        description="azure | memory. Unset: memory for demo and source_tables, azure otherwise.",
     )
 
     @field_validator("rv_data_mode", "rv_data_source", mode="before")
@@ -65,6 +65,9 @@ class Settings(BaseSettings):
         return raw
 
     def resolved_staffing_persistence(self) -> str:
+        if not self.staffing_persistence:
+            # source_tables needs nothing but the two source tables, so it creates no staffing tables.
+            return "memory" if self.resolved_rv_data_source() in ("demo", "source_tables") else "azure"
         mode = self.staffing_persistence.strip().lower()
         if mode not in _STAFFING_STORES:
             raise ValueError("STAFFING_PERSISTENCE must be azure or memory")

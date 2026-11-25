@@ -24,8 +24,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e ./packages/rv-availability
-      - run: pip install -r services/staffing-api/requirements.txt
+      # requirements.txt points at ../../packages/rv-availability, and pip resolves that
+      # against the current folder, so install from services/staffing-api.
+      - run: pip install -r requirements.txt
+        working-directory: services/staffing-api
       - run: python -m pytest tests -q
         working-directory: services/staffing-api
         env:

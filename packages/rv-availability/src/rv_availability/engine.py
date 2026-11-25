@@ -240,7 +240,19 @@ def effective_exit(hr: dict[str, Any]) -> date | None:
     return None
 
 
-def build_employees(hr_rows: list[dict[str, Any]], rows: list[PtRow]) -> dict[str, Employee]:
+def build_employees(
+    hr_rows: list[dict[str, Any]],
+    rows: list[PtRow],
+    lookup: dict[str, dict[str, str | None]] | None = None,
+    pt_codes: dict[str, str] | None = None,
+) -> dict[str, Employee]:
+    """Employee dimension.
+
+    ``lookup`` (optional) is the per-employee "latest Project Track row with a real name" result
+    computed elsewhere (for example in SQL over every PT month); when omitted it is derived from
+    ``rows``. ``pt_codes`` (optional) adds every Project Track employee id, in any month, with
+    its display code, so the dimension matches one built from every PT row.
+    """
     key_counts: dict[str, int] = defaultdict(int)
     for hr in hr_rows:
         if hr.get("employee_key"):
@@ -256,23 +268,29 @@ def build_employees(hr_rows: list[dict[str, Any]], rows: list[PtRow]) -> dict[st
         if row.named:
             named_rows[row.employee_key].append(row)
 
-    keys = set(valid_hr) | set(named_rows)
+    pt_codes = pt_codes or {}
+    keys = set(valid_hr) | set(named_rows) | set(pt_codes)
     employees: dict[str, Employee] = {}
     for key in keys:
         hr = valid_hr.get(key)
-        lookup = _lookup(key, named_rows.get(key, []))
-        code = (hr or {}).get("employee_code") or _first_code(named_rows.get(key, [])) or key
+        found = (lookup.get(key) or {}) if lookup is not None else _lookup(key, named_rows.get(key, []))
+        code = (
+            (hr or {}).get("employee_code")
+            or _first_code(named_rows.get(key, []))
+            or pt_codes.get(key)
+            or key
+        )
 
         joining = hr.get("joining_date") if hr else None
         exit_date = effective_exit(hr) if hr else None
         dates_valid = bool(hr) and joining is not None and (exit_date is None or exit_date >= joining)
 
         def pick(pt_name: str | None, hr_name: str | None) -> str | None:
-            return lookup.get(pt_name) if pt_name and lookup.get(pt_name) else (hr or {}).get(hr_name)
+            return found.get(pt_name) if pt_name and found.get(pt_name) else (hr or {}).get(hr_name)
 
-        name = lookup.get("employee_name") or (hr or {}).get("employee_name")
+        name = found.get("employee_name") or (hr or {}).get("employee_name")
         if name:
-            name_source = "Project Track" if lookup.get("employee_name") else "ZingHR"
+            name_source = "Project Track" if found.get("employee_name") else "ZingHR"
         else:
             name = "(Missing HR match)" if not hr else "-"
             name_source = "Unavailable"
@@ -479,6 +497,46 @@ class Project:
         return f"{self.id}: {self.name}"
 
 
+def _make_project(
+    project_id: str,
+    first: Any,
+    types: list[str],
+    starts: list[date],
+    ends: list[date],
+) -> Project:
+    """``first(attr)`` returns the first non-blank value of ``attr`` in row-id order."""
+    client = first("parent_account") or first("account")
+    bdu = first("bdu")
+    client_bu = (
+        NOT_AVAILABLE if client is None and bdu is None
+        else f"{client} / {bdu}" if client and bdu
+        else client or bdu or NOT_AVAILABLE
+    )
+    categories = {
+        {"FTE": FTE_BASED, "Program": PROGRAM_BASED}.get(contract_class(t), NOT_SPECIFIED)
+        for t in types
+    }
+    contract_type = NOT_AVAILABLE if not types else types[0] if len(types) == 1 else "Multiple contract types"
+    contract_category = (
+        NOT_SPECIFIED if not categories else next(iter(categories)) if len(categories) == 1 else "Mixed Contracts"
+    )
+    status_raw = first("project_status")
+    return Project(
+        id=project_id,
+        name=first("project_name") or NOT_AVAILABLE,
+        client_bu=client_bu,
+        status_raw=status_raw,
+        status=display_status(status_raw),
+        lead=first("project_lead") or NOT_AVAILABLE,
+        contract_type=contract_type,
+        contract_category=contract_category,
+        start=min(starts) if starts else None,
+        end=max(ends) if ends else None,
+        description=first("notes") or NOT_AVAILABLE,
+        client=client,
+    )
+
+
 def build_projects(pt_rows: list[dict[str, Any]]) -> dict[str, Project]:
     by_project: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for raw in pt_rows:
@@ -490,43 +548,44 @@ def build_projects(pt_rows: list[dict[str, Any]]) -> dict[str, Project]:
     for project_id, group in by_project.items():
         group = sorted(group, key=lambda r: (r.get("row_id") is None, r.get("row_id") or ""))
 
-        def first(attr: str) -> str | None:
+        def first(attr: str, group=group) -> str | None:
             return next((v for v in (_blank_null(r.get(attr)) for r in group) if v), None)
 
-        client = first("parent_account") or first("account")
-        bdu = first("bdu")
-        client_bu = (
-            NOT_AVAILABLE if client is None and bdu is None
-            else f"{client} / {bdu}" if client and bdu
-            else client or bdu or NOT_AVAILABLE
-        )
-
         types = sorted({t for t in (_blank_null(r.get("contract_type")) for r in group) if t})
-        categories = {
-            {"FTE": FTE_BASED, "Program": PROGRAM_BASED}.get(contract_class(t), NOT_SPECIFIED)
-            for t in types
-        }
-        contract_type = NOT_AVAILABLE if not types else types[0] if len(types) == 1 else "Multiple contract types"
-        contract_category = (
-            NOT_SPECIFIED if not categories else next(iter(categories)) if len(categories) == 1 else "Mixed Contracts"
-        )
         starts = [r["start_date"] for r in group if r.get("start_date")]
         ends = [r["end_date"] for r in group if r.get("end_date")]
-        status_raw = first("project_status")
+        projects[project_id] = _make_project(project_id, first, types, starts, ends)
+    return projects
 
-        projects[project_id] = Project(
-            id=project_id,
-            name=first("project_name") or NOT_AVAILABLE,
-            client_bu=client_bu,
-            status_raw=status_raw,
-            status=display_status(status_raw),
-            lead=first("project_lead") or NOT_AVAILABLE,
-            contract_type=contract_type,
-            contract_category=contract_category,
-            start=min(starts) if starts else None,
-            end=max(ends) if ends else None,
-            description=first("notes") or NOT_AVAILABLE,
-            client=client,
+
+def build_projects_from_dimension(
+    dimension: list[dict[str, Any]],
+    contract_types: list[dict[str, Any]],
+) -> dict[str, Project]:
+    """Projects from a precomputed dimension: one row per project holding, per attribute, the first
+    non-blank value in row-id order, plus MIN(start_date) / MAX(end_date); and one row per
+    (project, contract type). Produces the same Project objects as ``build_projects``."""
+    types: dict[str, set[str]] = defaultdict(set)
+    for r in contract_types:
+        t = _blank_null(r.get("contract_type"))
+        if r.get("project_id") and t:
+            types[r["project_id"]].add(t)
+
+    projects: dict[str, Project] = {}
+    for r in dimension:
+        project_id = r.get("project_id")
+        if not project_id:
+            continue
+
+        def first(attr: str, r=r) -> str | None:
+            return _blank_null(r.get(attr))
+
+        projects[project_id] = _make_project(
+            project_id,
+            first,
+            sorted(types.get(project_id, ())),
+            [r["start_date"]] if r.get("start_date") else [],
+            [r["end_date"]] if r.get("end_date") else [],
         )
     return projects
 
@@ -547,11 +606,27 @@ class Snapshot:
         cache = getattr(self, "_rows_by_employee", None)
         if cache is None:
             cache = defaultdict(list)
+            in_window = set(self.window)
             for row in self.rows:
-                if row.named and row.month in set(self.window):
+                if row.named and row.month in in_window:
                     cache[row.employee_key].append(row)
             self._rows_by_employee = cache  # type: ignore[attr-defined]
         return cache
+
+
+def _quality(rows: list[PtRow], employees: dict[str, Employee], employee_months, window: list[int]) -> dict[str, int]:
+    in_window = set(window)
+    windowed_named = [r for r in rows if r.named and r.month in in_window]
+    return {
+        "unresolved_rows": sum(1 for r in windowed_named if r.status == UNRESOLVED),
+        "placeholder_rows": sum(1 for r in windowed_named if r.status == PLACEHOLDER),
+        "missing_hr_match_employees": len(
+            {r.employee_key for r in windowed_named if not employees[r.employee_key].hr_matched}
+        ),
+        "rows_outside_employment": sum(
+            1 for r in windowed_named if (r.employee_key, r.month) not in employee_months
+        ),
+    }
 
 
 def build_snapshot(
@@ -565,20 +640,39 @@ def build_snapshot(
     rows = classify_rows(pt_rows)
     employees = build_employees(hr_rows, rows)
     employee_months = build_employee_months(rows, employees, window, capacity_hours)
-    months_with_data = {r.month for r in rows if r.month is not None}
+    return Snapshot(
+        today=today,
+        window=window,
+        months_with_data={r.month for r in rows if r.month is not None},
+        rows=rows,
+        employees=employees,
+        employee_months=employee_months,
+        projects=build_projects(pt_rows),
+        data_quality=_quality(rows, employees, employee_months, window),
+    )
 
+
+def build_snapshot_from_parts(
+    window_pt_rows: list[dict[str, Any]],
+    hr_rows: list[dict[str, Any]],
+    today: date,
+    *,
+    lookup: dict[str, dict[str, str | None]],
+    pt_codes: dict[str, str],
+    projects: dict[str, Project],
+    months_with_data: set[int],
+    capacity_hours: float = CAPACITY_HOURS,
+    window_months: int = WINDOW_MONTHS,
+) -> Snapshot:
+    """Same result as ``build_snapshot`` for everything inside the reporting window, built from
+    pieces the database already reduced: named PT rows inside the window only, the employee
+    lookup and PT employee ids over every month, the project dimension, and the window months
+    that hold any PT row. Rows outside the window are never transferred."""
+    window = build_window(today, window_months)
     in_window = set(window)
-    windowed_named = [r for r in rows if r.named and r.month in in_window]
-    quality = {
-        "unresolved_rows": sum(1 for r in windowed_named if r.status == UNRESOLVED),
-        "placeholder_rows": sum(1 for r in windowed_named if r.status == PLACEHOLDER),
-        "missing_hr_match_employees": len(
-            {r.employee_key for r in windowed_named if not employees[r.employee_key].hr_matched}
-        ),
-        "rows_outside_employment": sum(
-            1 for r in windowed_named if (r.employee_key, r.month) not in employee_months
-        ),
-    }
+    rows = [r for r in classify_rows(window_pt_rows) if r.named and r.month in in_window]
+    employees = build_employees(hr_rows, rows, lookup=lookup, pt_codes=pt_codes)
+    employee_months = build_employee_months(rows, employees, window, capacity_hours)
     return Snapshot(
         today=today,
         window=window,
@@ -586,6 +680,6 @@ def build_snapshot(
         rows=rows,
         employees=employees,
         employee_months=employee_months,
-        projects=build_projects(pt_rows),
-        data_quality=quality,
+        projects=projects,
+        data_quality=_quality(rows, employees, employee_months, window),
     )

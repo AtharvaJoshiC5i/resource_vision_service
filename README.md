@@ -18,9 +18,33 @@ Copy `services/staffing-api/.env.example` to `.env` locally with Azure settings.
 | `RV_DATA_MODE` | Behaviour |
 |----------------|-----------|
 | `azure` | `rv2_*` / PT / ZingHR from Azure SQL; use `STAFFING_PERSISTENCE=azure` for workflow tables |
+| `source_tables` | Reads **only** `dbo.project_track_proposals_table` and `dbo.zinghr_employee_master`. No `dbo.rv_*` helper functions, views, `rv2_*` tables or staffing tables needed; staffing store defaults to `memory` |
 | `demo` | Synthetic availability; staffing store forced to `memory` |
 
 Optional override: `RV_DATA_SOURCE` if `RV_DATA_MODE` is unset. Check active mode: `GET /api/staffing/runtime`.
+
+### Running on another database with only the two source tables
+
+Set in `.env`: your own `AZURE_SQL_CONNECTION_STRING`, `RV_DATA_MODE=source_tables`, and leave
+`STAFFING_PERSISTENCE` unset (workflow state is then kept in memory and lost on restart). The tables
+must have the same column names as the current Project Track and ZingHR tables.
+
+How it stays fast (`app/rv/source_tables.py`):
+
+- detail rows are read only for the 19-month window (`month_key` range filter);
+- the employee name lookup and the project dimension, which need every month, are reduced to one row
+  per employee / project inside SQL;
+- the six reads run in parallel; requests are served from the in-memory snapshot;
+- a one-row change fingerprint (row counts + checksums) is checked every `RV_SOURCE_CHECK_SECONDS`
+  (default 60) in the background, and before every confirmation. The snapshot reloads only when it
+  changes, or after `RV_SOURCE_MAX_AGE_SECONDS` (default 900).
+
+Text cleanup is done in Python (`clean` / `employee_key`: trim, blank or `null` -> empty, codes in upper
+case). If your `dbo.rv_Blank` / `rv_Clean` / `rv_Key` rules differ, change them in that one file.
+Skills still come from `dbo.vw_RV_EmployeeSkillsForDashboard`; without that view the skill columns are empty.
+
+Optional, if the first load is slow on a very large table (needs DBA approval, creates an index):
+`CREATE INDEX IX_ptp_month_key ON dbo.project_track_proposals_table (month_key);`
 
 Apply service DDL once: [`services/staffing-api/sql/staffing_schema.sql`](services/staffing-api/sql/staffing_schema.sql).
 

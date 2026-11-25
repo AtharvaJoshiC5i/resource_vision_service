@@ -54,7 +54,8 @@ def _data_sources() -> list[dict]:
         {"id": "zinghr", "label": "dbo.zinghr_employee_master", "status": "azure" if azure else "demo"},
         {
             "id": "rv2_facts",
-            "label": "dbo.rv2_*" if mode == "azure" else "engine (PT+HR)" if mode == "azure_raw" else "demo",
+            "label": {"azure": "dbo.rv2_*", "azure_raw": "engine (PT+HR)",
+                      "source_tables": "engine (PT+HR, no helpers)"}.get(mode, "demo"),
             "status": "azure" if azure else "demo",
         },
         {"id": "skills", "label": "dbo.vw_RV_EmployeeSkillsForDashboard", "status": skills_status},

@@ -9,7 +9,7 @@ def resolved_rv_data_source() -> str:
 
 
 def staffing_persistence() -> str:
-    return get_settings().staffing_persistence.strip().lower()
+    return get_settings().resolved_staffing_persistence()
 
 
 def azure_sql_configured() -> bool:

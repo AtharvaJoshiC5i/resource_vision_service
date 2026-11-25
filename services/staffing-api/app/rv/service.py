@@ -3,6 +3,8 @@
 RV_DATA_SOURCE:
   azure      (default) read the precomputed rv2_* tables; reload only when rv2_Meta.Version changes
   azure_raw  recompute from the two source tables in Python (slow; reference/oracle)
+  source_tables  only the two source tables, reduced in SQL with no helper functions, views or
+             precomputed tables; reload when the change fingerprint moves (see source_tables.py)
   demo       synthetic data, no database
 """
 
@@ -12,7 +14,7 @@ import logging
 import os
 import threading
 import time
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 from app.config import get_settings
@@ -20,15 +22,21 @@ from app.database import DatabaseError, fetch_rows
 from rv_availability import engine as e
 from rv_availability.demo_data import build_demo
 
+from app.rv import source_tables
 from app.rv.facts import load_snapshot_from_facts, read_meta
 from app.rv.sql import HR_EMPLOYEES, PROJECT_TRACK_ROWS
 
 logger = logging.getLogger("resource_vision")
 VERSION_CHECK_SECONDS = int(os.environ.get("RV_VERSION_CHECK_SECONDS", "5"))
 RAW_CACHE_SECONDS = int(os.environ.get("RV_CACHE_SECONDS", "60"))
+SOURCE_CHECK_SECONDS = int(os.environ.get("RV_SOURCE_CHECK_SECONDS", "60"))
+SOURCE_MAX_AGE_SECONDS = int(os.environ.get("RV_SOURCE_MAX_AGE_SECONDS", "900"))
 
 _lock = threading.Lock()
-_state: dict[str, Any] = {"snapshot": None, "version": None, "checked": 0.0, "day": None, "meta": {}}
+_state: dict[str, Any] = {
+    "snapshot": None, "version": None, "checked": 0.0, "day": None, "meta": {},
+    "fingerprint": None, "loaded": 0.0,
+}
 
 
 def data_source() -> str:
@@ -59,9 +67,21 @@ def _reload(today: date) -> None:
             "facts_date": snapshot.today.isoformat(),
             "stale": snapshot.today != today,
         })
+    elif data_source() == "source_tables":
+        fingerprint = source_tables.read_fingerprint()
+        started = time.perf_counter()
+        snapshot = source_tables.load_snapshot(today, capacity_hours())
+        seconds = round(time.perf_counter() - started, 3)
+        logger.info("Loaded availability from source tables in %.2fs", seconds)
+        _state.update(snapshot=snapshot, version=None, fingerprint=fingerprint, meta={
+            "version": None,
+            "refreshed_utc": datetime.now(timezone.utc).isoformat(),
+            "facts_date": today.isoformat(),
+            "load_seconds": seconds,
+        })
     else:
         _state.update(snapshot=_load_raw(today), version=None, meta={"version": None, "refreshed_utc": None})
-    _state.update(day=today)
+    _state.update(day=today, loaded=time.monotonic())
 
 
 def _check_and_reload(today: date) -> None:
@@ -70,6 +90,12 @@ def _check_and_reload(today: date) -> None:
         if data_source() == "azure":
             meta = read_meta()
             changed = meta is None or int(meta["Version"]) != _state["version"] or _state["day"] != today
+        elif data_source() == "source_tables":
+            changed = (
+                _state["day"] != today
+                or time.monotonic() - _state["loaded"] >= SOURCE_MAX_AGE_SECONDS
+                or source_tables.read_fingerprint() != _state["fingerprint"]
+            )
         else:
             changed = True
         if changed or _state["snapshot"] is None:
@@ -111,7 +137,9 @@ def get_snapshot(*, fresh: bool = False) -> e.Snapshot:
                 _check_and_reload(today)
         return _state["snapshot"]
 
-    interval = VERSION_CHECK_SECONDS if data_source() == "azure" else RAW_CACHE_SECONDS
+    interval = {"azure": VERSION_CHECK_SECONDS, "source_tables": SOURCE_CHECK_SECONDS}.get(
+        data_source(), RAW_CACHE_SECONDS
+    )
     if time.monotonic() - _state["checked"] >= interval or _state["day"] != today:
         _refresh_in_background(today)
     return _state["snapshot"]
