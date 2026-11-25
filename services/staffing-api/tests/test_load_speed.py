@@ -33,7 +33,9 @@ def test_due_refresh_does_not_block_the_request(client, monkeypatch):
         service._state["checked"] = time.monotonic()
 
     monkeypatch.setattr(service, "_check_and_reload", slow_check)
-    service._state["checked"] = 0.0
+    # Make the check overdue. Not 0.0: time.monotonic() counts from boot on Linux, so on a
+    # freshly started CI machine 0.0 can be less than one check interval ago.
+    service._state["checked"] = time.monotonic() - 3600
     started = time.perf_counter()
     assert service.get_snapshot() is snap
     assert time.perf_counter() - started < 0.1
