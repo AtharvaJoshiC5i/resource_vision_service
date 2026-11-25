@@ -1,74 +1,91 @@
 # Resource Vision Confirmed Staffing Service
 
-Single **Azure SQL** database hosts Project Track, ZingHR, `rv2_*` facts, skills view, and `dbo.rv_staffing_*` workflow tables.
+Commands are for Windows PowerShell and start from the repository root unless stated.
 
-## Backend (`services/staffing-api`)
+## Prerequisites
 
-Mirrors [`resource_vision_poc`](c:\Programming and Coding\resource_vision_poc) availability:
+- Python 3.11 or newer
+- Node.js 20.19+ or 22.12+
+- Microsoft ODBC Driver 18 for SQL Server
+- A database login that can read the source tables, with your IP allowed in the Azure SQL firewall
 
-- `app/database.py` — pyodbc to Azure SQL
-- `app/rv/service.py` — cached `rv2_*` snapshot (`RV_DATA_SOURCE=azure`)
-- `app/rv/facts.py`, `sql.py`, `routes.py`, `skills.py` — same read API at `/api/rv/*`
-- `app/staffing_store.py` — `dbo.rv_staffing_*` via pyodbc (`STAFFING_PERSISTENCE=azure`)
+## Backend
 
-Copy `services/staffing-api/.env.example` to `.env` locally with Azure settings. **Do not commit secrets.**
-
-**Data switch** (restart API after change):
-
-| `RV_DATA_MODE` | Behaviour |
-|----------------|-----------|
-| `azure` | `rv2_*` / PT / ZingHR from Azure SQL; use `STAFFING_PERSISTENCE=azure` for workflow tables |
-| `source_tables` | Reads **only** `dbo.project_track_proposals_table` and `dbo.zinghr_employee_master`. No `dbo.rv_*` helper functions, views, `rv2_*` tables or staffing tables needed; staffing store defaults to `memory` |
-| `demo` | Synthetic availability; staffing store forced to `memory` |
-
-Optional override: `RV_DATA_SOURCE` if `RV_DATA_MODE` is unset. Check active mode: `GET /api/staffing/runtime`.
-
-### Running on another database with only the two source tables
-
-Set in `.env`: your own `AZURE_SQL_CONNECTION_STRING`, `RV_DATA_MODE=source_tables`, and leave
-`STAFFING_PERSISTENCE` unset (workflow state is then kept in memory and lost on restart). The tables
-must have the same column names as the current Project Track and ZingHR tables.
-
-How it stays fast (`app/rv/source_tables.py`):
-
-- detail rows are read only for the 19-month window (`month_key` range filter);
-- the employee name lookup and the project dimension, which need every month, are reduced to one row
-  per employee / project inside SQL;
-- the six reads run in parallel; requests are served from the in-memory snapshot;
-- a one-row change fingerprint (row counts + checksums) is checked every `RV_SOURCE_CHECK_SECONDS`
-  (default 60) in the background, and before every confirmation. The snapshot reloads only when it
-  changes, or after `RV_SOURCE_MAX_AGE_SECONDS` (default 900).
-
-Text cleanup is done in Python (`clean` / `employee_key`: trim, blank or `null` -> empty, codes in upper
-case). If your `dbo.rv_Blank` / `rv_Clean` / `rv_Key` rules differ, change them in that one file.
-Skills still come from `dbo.vw_RV_EmployeeSkillsForDashboard`; without that view the skill columns are empty.
-
-Optional, if the first load is slow on a very large table (needs DBA approval, creates an index):
-`CREATE INDEX IX_ptp_month_key ON dbo.project_track_proposals_table (month_key);`
-
-Apply service DDL once: [`services/staffing-api/sql/staffing_schema.sql`](services/staffing-api/sql/staffing_schema.sql).
+### First-time setup
 
 ```powershell
-pip install -e ./packages/rv-availability
-pip install -r ./services/staffing-api/requirements.txt
-cd services/staffing-api
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
+python -m venv venv
 ```
 
-Unit tests use `RV_DATA_SOURCE=demo` and `STAFFING_PERSISTENCE=memory` (see `tests/conftest.py`).
-
-## UI (`apps/project-track-simulator`)
-
-Single React page: **Project Track** (Project details, Knowledge Benchmarking, Audit & MNH tabs) + **Resource Vision Pools** (modal). Availability logic lives in the API (`/api/rv/*`); the POC's other pages are intentionally not replicated. Uses the POC design system ([`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)).
+```powershell
+.\venv\Scripts\Activate.ps1
+```
 
 ```powershell
-cd apps/project-track-simulator
+cd services\staffing-api
+```
+
+```powershell
+pip install -r requirements.txt
+```
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Run `pip install` from `services\staffing-api`; it fails from any other folder.
+
+Edit `services\staffing-api\.env` and set these lines (never commit this file):
+
+```
+RV_DATA_MODE=source_tables
+STAFFING_PERSISTENCE=memory
+AZURE_SQL_CONNECTION_STRING=Driver={ODBC Driver 18 for SQL Server};Server=tcp:<server>.database.windows.net,1433;Database=<database>;Uid=<user>;Pwd=<password>;Encrypt=yes;TrustServerCertificate=no;
+```
+
+`source_tables` reads `dbo.project_track_proposals_table` and `dbo.zinghr_employee_master`. Skills come from
+`dbo.vw_RV_EmployeeSkillsForDashboard`; without it the skill columns are empty. With `memory`, staffing
+selections are lost when the API restarts. To run without a database, set `RV_DATA_MODE=demo`.
+
+### Start
+
+From the repository root:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+```powershell
+cd services\staffing-api
+```
+
+```powershell
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8010
+```
+
+Check it from a second terminal:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8010/api/staffing/runtime
+```
+
+With `source_tables`, the API terminal also logs `Loaded availability from source tables in ...s` once the data
+has loaded.
+
+## Frontend
+
+Start the backend first, then open a second terminal at the repository root:
+
+```powershell
+cd apps\project-track-simulator
+```
+
+```powershell
 npm install
+```
+
+```powershell
 npm run dev
 ```
 
-Dev server: http://127.0.0.1:5175 — proxies `/api` to the staffing API on port 8010.
-
-## Design reference
-
-[`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) is copied from the POC and governs all UI work.
+Open http://localhost:5175. `npm install` is only needed the first time and after dependencies change.
