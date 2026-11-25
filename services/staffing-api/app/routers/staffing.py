@@ -20,6 +20,7 @@ from app.schemas import (
     ProjectTrackEvent,
     TrainingOutcome,
 )
+from app.services.capability_group import capability_group_key_from_filters
 from app.services.employee_blocks import EmployeeBlockLimitError, create_candidate_with_block
 from app.services.events import handle_project_event
 from app.services.mnh_email import build_staffing_email
@@ -183,12 +184,18 @@ def _candidates_json(store, candidates, project_id: str | None = None) -> list[d
     for c in candidates:
         d = demands.get(c.demand_id)
         code, name = people.get(c.employee_key.upper(), (c.employee_key, c.employee_key))
+        filters = d.filters_json if d else {}
+        demand_filters = {k: v for k, v in (filters or {}).items() if not str(k).startswith("_")}
+        cap_key = capability_group_key_from_filters(demand_filters)
         out.append(
             {
                 "id": c.id,
                 "demand_id": c.demand_id,
                 "project_id": d.project_id if d else None,
                 "position_id": d.position_id if d else None,
+                "capability_group_key": cap_key,
+                "demand_filters": demand_filters,
+                "required_skills": (d.required_skills_json if d else None) or [],
                 "employee_key": c.employee_key,
                 "employee_code": code,
                 "employee_name": name,
@@ -196,6 +203,21 @@ def _candidates_json(store, candidates, project_id: str | None = None) -> list[d
                 "months": [{"month_key": m.month_key, "hours": m.hours} for m in c.months],
             }
         )
+    return out
+
+
+def _mnh_slots_json(store, project_id: str) -> list[dict]:
+    hiring = {h.id: h for h in store.list_hiring_requests(project_id)}
+    out: list[dict] = []
+    for s in store.list_mnh_slots(project_id=project_id):
+        row = serialize(s)
+        h = hiring.get(s.hiring_request_id)
+        payload = h.payload if h else {}
+        ctx = payload.get("context") if isinstance(payload.get("context"), dict) else {}
+        filters = ctx.get("filters") or payload.get("filters") or {}
+        row["capability_group_key"] = capability_group_key_from_filters(filters)
+        row["demand_filters"] = filters
+        out.append(row)
     return out
 
 
@@ -307,7 +329,7 @@ def project_workflow(project_id: str):
         "interviews": [serialize(i) for i in store.list_interviews(project_id)],
         "kb_requests": [serialize(r) for r in store.list_kb_requests(project_id)],
         "hiring_requests": [serialize(h) for h in store.list_hiring_requests(project_id)],
-        "mnh_slots": [serialize(s) for s in store.list_mnh_slots(project_id=project_id)],
+        "mnh_slots": _mnh_slots_json(store, project_id),
     }
 
 

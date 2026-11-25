@@ -22,6 +22,7 @@ import { TableCard, TableScroll } from "../../components/ui/TableCard";
 import { tableClassDense, tableHeadClass } from "../../components/ui/tableClasses";
 import { useActionRunner, useProjectWorkflow } from "../../hooks/useProjectWorkflow";
 import { roleToLaunch, type LaunchPayload, type PoolsSelectionResult, type ResourceRole } from "../../lib/launch";
+import { blankRole, buildSections, positionIdForRole, roleFromFilters } from "../../lib/roleCapabilityGroups";
 import { ResourceVisionPoolsModal } from "../pools/ResourceVisionPoolsModal";
 
 import { AuditTab } from "./AuditTab";
@@ -48,21 +49,6 @@ function windowMonths(startIso: string, endIso: string): string[] {
   return out;
 }
 
-function newRole(index: number): ResourceRole {
-  return {
-    id: `role-${index}`,
-    primary: "",
-    secondary: "",
-    department: "",
-    location: "",
-    country: "",
-    grade: "",
-    skills: [],
-    monthHours: [],
-    status: "Open",
-  };
-}
-
 const EMPTY_OPTIONS: ProjectTrackFilterOptions = {
   primary_capability: [],
   secondary_capability: [],
@@ -79,7 +65,8 @@ export function ProjectTrackPage() {
   const [startDate, setStartDate] = useState("2026-12-01");
   const [endDate, setEndDate] = useState("2027-06-30");
   const [options, setOptions] = useState<ProjectTrackFilterOptions>(EMPTY_OPTIONS);
-  const [roles, setRoles] = useState<ResourceRole[]>(() => [newRole(1)]);
+  /** Filters for the next pool selection. Selections themselves live on the server. */
+  const [draft, setDraft] = useState<ResourceRole>(blankRole);
   const [dataMode, setDataMode] = useState<"azure" | "demo" | null>(null);
   const [metaError, setMetaError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastMessage | null>(null);
@@ -110,16 +97,15 @@ export function ProjectTrackPage() {
       .catch((err) => setMetaError(err instanceof Error ? err.message : "Request failed"));
   }, []);
 
-  const updateRole = (id: string, patch: Partial<ResourceRole>) =>
-    setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  const updateDraft = useCallback((patch: Partial<ResourceRole>) => setDraft((prev) => ({ ...prev, ...patch })), []);
 
   const launchForCandidate = useCallback(
     (c: Candidate): LaunchPayload | null => {
-      const role = roles.find((r) => r.id === c.position_id);
-      if (!role) return null;
+      // The filters and skills this person was selected with, as stored with the selection.
+      const role = roleFromFilters(c.demand_filters, c.position_id, c.required_skills ?? []);
       return roleToLaunch(projectId, startDate, endDate, { ...role, monthHours }, window.location.origin);
     },
-    [roles, projectId, startDate, endDate, monthHours],
+    [projectId, startDate, endDate, monthHours],
   );
 
   const openPostTrainingPath = useCallback(
@@ -177,27 +163,22 @@ export function ProjectTrackPage() {
     [launchForCandidate, projectId, setActivity],
   );
 
-  const openPoolsForRole = (roleId: string) => {
-    const role = roles.find((r) => r.id === roleId);
-    if (!role) return;
+  const openPools = () => {
+    const role = { ...draft, id: positionIdForRole(draft), monthHours };
     if (windowInvalid || monthHours.length === 0) {
       setActivity("Fix the project dates first: the end date must not be before the start date.");
       return;
     }
-    setPoolLaunch(roleToLaunch(projectId, startDate, endDate, { ...role, monthHours }, window.location.origin));
+    setPoolLaunch(roleToLaunch(projectId, startDate, endDate, role, window.location.origin));
   };
 
   const onPoolsComplete = useCallback(
     (result: PoolsSelectionResult) => {
       setPoolLaunch(null);
       if (result.status !== "completed") return;
-      setRoles((prev) =>
-        prev.map((r) =>
-          r.id === result.role_id && result.skills ? { ...r, skills: result.skills } : r,
-        ),
-      );
       const failed = result.results.filter((r) => !r.ok);
       const okCount = result.results.length - failed.length;
+      if (result.skills) setDraft((prev) => ({ ...prev, skills: result.skills ?? [] }));
       const actionLabel =
         result.action === "direct" ? "Direct select" : result.action === "kb" ? "KB" : "Interview";
       setActivity(
@@ -232,6 +213,7 @@ export function ProjectTrackPage() {
     run("event", "Date change event", () => staffingApi.fireEvent("dates_changed", projectId, { start_date: startDate, end_date: endDate }));
 
   const live = workflow.candidates.filter((c) => !FINISHED.has(c.status));
+  const sections = buildSections(workflow.candidates, workflow.mnhSlots);
   const count = (...s: string[]) => live.filter((c) => s.includes(c.status)).length;
   const rejected = workflow.interviews.filter((i) => i.status === "Rejected");
   const byCandidate = new Map(workflow.candidates.map((c) => [c.id, c]));
@@ -273,7 +255,12 @@ export function ProjectTrackPage() {
             <StatStrip
               label="Staffing workflow"
               stats={[
-                { label: "Open roles", value: roles.length, icon: Users, tone: "neutral" },
+                {
+                  label: "Capability sections",
+                  value: sections.length,
+                  icon: Users,
+                  tone: "neutral",
+                },
                 { label: "In training", value: count("KB Pending", "Training"), icon: BookOpenCheck, tone: "warning" },
                 { label: "Interviews", value: count("Interview Pending", "Interview Booked"), icon: CalendarClock, tone: "primary" },
                 { label: "Skills matched", value: count("Skills Matched"), icon: Sparkles, tone: "primary" },
@@ -317,16 +304,14 @@ export function ProjectTrackPage() {
             </Card>
 
             <RoleTable
-              roles={roles}
+              draft={draft}
               options={options}
               candidates={workflow.candidates}
               mnhSlots={workflow.mnhSlots}
               handlers={handlers}
               monthKeys={months}
-              onChange={updateRole}
-              onAdd={() => setRoles((prev) => [...prev, newRole(Math.max(0, ...prev.map((r) => Number(r.id.split("-")[1]))) + 1)])}
-              onRemove={(id) => setRoles((prev) => prev.filter((r) => r.id !== id))}
-              onSelect={openPoolsForRole}
+              onChange={updateDraft}
+              onSelect={openPools}
             />
 
             <TableCard title="Previously rejected candidates" count={`${rejected.length}`}>

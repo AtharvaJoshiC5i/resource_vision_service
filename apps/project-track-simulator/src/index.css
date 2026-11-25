@@ -498,6 +498,25 @@ button.rv-kpi-card:hover:not(:disabled) {
   box-shadow: var(--shadow-focus);
 }
 
+/* Capability sections under the selection filters */
+.rv-role-sections__target {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  box-shadow: inset 0 1px 0 var(--color-hairline);
+}
+.rv-role-sections__target strong {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.rv-role-sections__empty {
+  padding: 0.75rem 1rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+}
 .rv-role-candidates {
   border-radius: 0.5rem;
   background: color-mix(in srgb, var(--color-canvas) 40%, var(--color-surface));
@@ -5095,4 +5114,129 @@ body {
   .rv-pools-sidebar .rv-pool-filters {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ---- Capability sections: one group per primary + secondary pair ----------
+   Flat and edge to edge, like grouped rows in one table: a quiet heading band,
+   hairline rules, no accent bars, tints or shadows. */
+.rv-role-sections {
+  display: flex;
+  flex-direction: column;
+}
+.rv-role-section {
+  border-top: 1px solid var(--color-hairline);
+}
+.rv-role-section + .rv-role-section {
+  border-top-width: 1px;
+  box-shadow: inset 0 0.5rem 0 var(--color-canvas);
+  padding-top: 0.5rem;
+}
+.rv-role-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 1.25rem;
+  background: color-mix(in srgb, var(--color-canvas) 60%, var(--color-surface));
+  border-bottom: 1px solid var(--color-hairline);
+}
+.rv-role-section__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: var(--color-ink);
+}
+.rv-role-section__meta {
+  margin-right: auto;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: var(--color-muted);
+}
+
+/* The tables sit flush inside the group and scroll sideways together. */
+.rv-role-section__body {
+  overflow-x: auto;
+}
+.rv-role-section .rv-role-candidates {
+  margin: 0;
+  overflow: visible;
+  border-radius: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.rv-role-section .rv-role-candidates > div {
+  overflow: visible;
+}
+
+/* Identical column widths, so rows line up within a group and across groups. */
+.rv-role-section .rv-role-candidates-table {
+  width: 100%;
+  table-layout: fixed;
+}
+.rv-role-section .rv-role-candidates-table tr > * {
+  width: 4.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+.rv-role-section .rv-role-candidates-table tr > :nth-child(1) {
+  width: 8.75rem;
+  padding-left: 1.25rem;
+}
+.rv-role-section .rv-role-candidates-table tr > :nth-child(n + 2):nth-child(-n + 7) {
+  width: 7rem;
+}
+.rv-role-section .rv-role-candidates-table tr > :nth-child(8) {
+  width: 11rem;
+}
+.rv-role-section .rv-role-candidates-table tr > :last-child {
+  width: 15rem;
+  padding-right: 1.25rem;
+}
+.rv-role-section .rv-role-candidates-table thead tr,
+.rv-role-section .rv-role-candidates-table thead th {
+  vertical-align: bottom;
+  background: var(--color-surface);
+}
+.rv-role-section .rv-role-cand-hd {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.6875rem;
+  color: var(--color-muted);
+}
+.rv-role-section .rv-role-candidate-row {
+  background: var(--color-surface);
+}
+.rv-role-section .rv-role-candidate-row:hover {
+  background: var(--rv-table-row-hover);
+}
+.rv-role-section .rv-role-candidate-row:last-child {
+  border-bottom: 0;
+}
+.rv-role-section .rv-role-cand-crit {
+  font-weight: 400;
+}
+.rv-role-section .rv-role-cand-crit--any {
+  color: var(--color-muted);
+}
+.rv-role-section .rv-role-cand-hours {
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: none;
+  box-shadow: none;
+}
+.rv-role-section .rv-role-cand-hours--empty {
+  font-weight: 400;
+}
+
+/* Hiring slots below people share the column headings above them. */
+.rv-role-section .rv-role-candidates + .rv-role-candidates {
+  border-top: 1px solid var(--color-hairline);
+}
+.rv-role-section .rv-role-candidates + .rv-role-candidates thead {
+  visibility: collapse;
 }

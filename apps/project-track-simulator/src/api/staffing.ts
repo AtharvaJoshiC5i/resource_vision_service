@@ -21,6 +21,10 @@ export type Candidate = {
   demand_id: string;
   project_id: string | null;
   position_id: string | null;
+  /** Primary + secondary capability of the filters this person was selected with. */
+  capability_group_key?: string | null;
+  demand_filters?: Record<string, string[]>;
+  required_skills?: { name: string; level: string }[];
   employee_key: string;
   employee_code: string;
   employee_name: string;
@@ -71,6 +75,8 @@ export type MnhStaffingSlot = {
   hiring_request_id: string;
   project_id: string;
   position_id: string | null;
+  capability_group_key?: string | null;
+  demand_filters?: Record<string, string[]>;
   slot_index: number;
   headcount_total: number;
   status: string;

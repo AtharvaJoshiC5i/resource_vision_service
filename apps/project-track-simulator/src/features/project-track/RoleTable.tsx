@@ -1,19 +1,21 @@
-import { Fragment } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useMemo } from "react";
 
 import type { Candidate, MnhStaffingSlot } from "../../api/staffing";
 import type { ProjectTrackFilterOptions } from "../../api/staffingMeta";
-import { primaryButtonClass, quietButtonClass } from "../../components/ui/primitives";
-import { RoleFilterSelect } from "./RoleFilterSelect";
+import { primaryButtonClass } from "../../components/ui/primitives";
 import { TableCard, TableScroll } from "../../components/ui/TableCard";
 import { tableClassDense, tableHeadClass } from "../../components/ui/tableClasses";
+import { roleStatusForRole } from "../../lib/candidateStatus";
 import type { ResourceRole } from "../../lib/launch";
+import { buildSections, roleFromFilters, sectionKeyForRole, sectionLabel } from "../../lib/roleCapabilityGroups";
 
-import { FINISHED, roleStatusForRole } from "../../lib/candidateStatus";
-
+import type { CandidateHandlers } from "./CandidateActions";
 import { CandidateStatusPill } from "./CandidateStatus";
 import { RoleCandidatesTable } from "./RoleCandidatesTable";
+import { RoleFilterSelect } from "./RoleFilterSelect";
 import { RoleMnhSlotsTable } from "./RoleMnhSlotsTable";
+
+export type { CandidateHandlers } from "./CandidateActions";
 
 const FILTER_COLUMNS: { key: keyof ProjectTrackFilterOptions; role: keyof ResourceRole; label: string }[] = [
   { key: "primary_capability", role: "primary", label: "Primary" },
@@ -24,150 +26,147 @@ const FILTER_COLUMNS: { key: keyof ProjectTrackFilterOptions; role: keyof Resour
   { key: "grade", role: "grade", label: "Grade" },
 ];
 
-import type { CandidateHandlers } from "./CandidateActions";
-
-export type { CandidateHandlers } from "./CandidateActions";
-
+/**
+ * One filter row for the next selection, then one section per primary + secondary capability pair.
+ * Everyone selected with the same pair is listed in that pair's section, one row per person, with
+ * the filters they were selected with. A different pair starts a new section.
+ */
 export function RoleTable({
-  roles,
+  draft,
   options,
   candidates,
   mnhSlots = [],
   handlers,
   monthKeys = [],
   onChange,
-  onAdd,
-  onRemove,
   onSelect,
 }: {
-  roles: ResourceRole[];
+  draft: ResourceRole;
   options: ProjectTrackFilterOptions;
   candidates: Candidate[];
   mnhSlots?: MnhStaffingSlot[];
   handlers: CandidateHandlers;
   /** Project timeline months (YYYY-MM-DD); used for candidate hour columns. */
   monthKeys?: string[];
-  onChange: (id: string, patch: Partial<ResourceRole>) => void;
-  onAdd: () => void;
-  onRemove: (id: string) => void;
-  onSelect: (roleId: string) => void;
+  onChange: (patch: Partial<ResourceRole>) => void;
+  onSelect: () => void;
 }) {
+  const sections = useMemo(() => buildSections(candidates, mnhSlots), [candidates, mnhSlots]);
+  const target = sections.find((s) => s.key === sectionKeyForRole(draft));
+  const draftSkills = draft.skills.filter((s) => s.name.trim());
+
   return (
     <TableCard
       title="Skill capabilities mix · Resourcing"
-      count={`${roles.length} ${roles.length === 1 ? "role" : "roles"}`}
-      description="Row filters flow into Resource Vision Pools when you click Select employee. Only confirmed allocations reduce availability."
-      actions={
-        <button type="button" className={primaryButtonClass} onClick={onAdd}>
-          <Plus size={14} aria-hidden /> New resource role
-        </button>
-      }
+      count={`${sections.length} ${sections.length === 1 ? "section" : "sections"}`}
+      description="Choose filters and click Select employee. People selected with the same primary and secondary capability are listed together in one section; a different pair starts a new section. Only confirmed allocations reduce availability."
     >
-      <TableScroll label="Resource roles">
-        <table className={`${tableClassDense} rv-role-table min-w-[72rem]`}>
+      <TableScroll label="Filters for the next selection">
+        <table className={`${tableClassDense} rv-role-table min-w-[64rem]`}>
           <thead>
             <tr>
-              <th className={[tableHeadClass, "rv-role-table__index"].join(" ")}>#</th>
               {FILTER_COLUMNS.map((c) => (
                 <th key={c.key} className={[tableHeadClass, "rv-role-table__filter-hd"].join(" ")}>
                   {c.label}
                 </th>
               ))}
               <th className={tableHeadClass}>Required skills</th>
-              <th className={tableHeadClass}>Status</th>
               <th className={tableHeadClass}>
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            {roles.map((role, idx) => {
-              const mine = candidates.filter(
-                (c) => c.position_id === role.id && !FINISHED.has(c.status),
-              );
-              const live = mine.filter((c) => !FINISHED.has(c.status));
-              const mnhForRole = mnhSlots.filter(
-                (s) => s.position_id === role.id && s.status === "Hiring from MNH",
-              );
-              const status = roleStatusForRole(
-                live.map((c) => c.status),
-                mnhForRole.length > 0,
-              );
-              return (
-                <Fragment key={role.id}>
-                  <tr className="rv-role-table__row">
-                    <td className="rv-role-table__index tabular-nums text-muted">{idx + 1}</td>
-                    {FILTER_COLUMNS.map((col) => (
-                      <td key={col.key} className="rv-role-table__filter-cell">
-                        <RoleFilterSelect
-                          label={col.label}
-                          rowIndex={idx}
-                          value={String(role[col.role] ?? "")}
-                          options={options[col.key]}
-                          onChange={(v) => onChange(role.id, { [col.role]: v })}
-                        />
-                      </td>
+            <tr className="rv-role-table__row">
+              {FILTER_COLUMNS.map((col) => (
+                <td key={col.key} className="rv-role-table__filter-cell">
+                  <RoleFilterSelect
+                    label={col.label}
+                    rowIndex={0}
+                    value={String(draft[col.role] ?? "")}
+                    options={options[col.key]}
+                    onChange={(v) => onChange({ [col.role]: v })}
+                  />
+                </td>
+              ))}
+              <td className="max-w-[14rem]">
+                {draftSkills.length ? (
+                  <div className="flex flex-wrap gap-1">
+                    {draftSkills.map((s) => (
+                      <span key={s.name} className="rv-soft-tag">
+                        {s.name} · {s.level}
+                      </span>
                     ))}
-                    <td className="max-w-[14rem]">
-                      {role.skills.filter((s) => s.name.trim()).length ? (
-                        <div className="flex flex-wrap gap-1">
-                          {role.skills
-                            .filter((s) => s.name.trim())
-                            .map((s) => (
-                              <span key={s.name} className="rv-soft-tag">
-                                {s.name} · {s.level}
-                              </span>
-                            ))}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted">Set in pools</span>
-                      )}
-                    </td>
-                    <td>
-                      <CandidateStatusPill status={status} />
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-1.5">
-                        <button type="button" className={primaryButtonClass} onClick={() => onSelect(role.id)}>
-                          Select employee
-                        </button>
-                        {roles.length > 1 && live.length === 0 && mnhForRole.length === 0 ? (
-                          <button
-                            type="button"
-                            className={quietButtonClass}
-                            aria-label={`Remove role ${idx + 1}`}
-                            onClick={() => onRemove(role.id)}
-                          >
-                            <Trash2 size={14} aria-hidden />
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                  {mine.length > 0 || mnhForRole.length > 0 ? (
-                    <tr className="rv-table-nested">
-                      <td />
-                      <td colSpan={FILTER_COLUMNS.length + 3} className="!py-3 !px-2">
-                        {mnhForRole.length > 0 ? (
-                          <RoleMnhSlotsTable slots={mnhForRole} role={role} monthKeys={monthKeys} />
-                        ) : null}
-                        {mine.length > 0 ? (
-                          <RoleCandidatesTable
-                            candidates={mine}
-                            handlers={handlers}
-                            role={role}
-                            monthKeys={monthKeys}
-                          />
-                        ) : null}
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
-              );
-            })}
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted">Set in pools</span>
+                )}
+              </td>
+              <td>
+                <button type="button" className={primaryButtonClass} onClick={onSelect}>
+                  Select employee
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </TableScroll>
+
+      <p className="rv-role-sections__target">
+        {target ? (
+          <>
+            Selections join the <strong>{target.label}</strong> section.
+          </>
+        ) : (
+          <>
+            Selections start a new <strong>{sectionLabel(draft.primary, draft.secondary)}</strong> section.
+          </>
+        )}
+      </p>
+
+      {sections.length === 0 ? (
+        <p className="rv-role-sections__empty">No one has been selected for this project yet.</p>
+      ) : (
+        <div className="rv-role-sections">
+          {sections.map((section) => {
+            const status = roleStatusForRole(
+              section.candidates.map((c) => c.status),
+              section.mnhSlots.length > 0,
+            );
+            const people = section.candidates.length;
+            const slots = section.mnhSlots.length;
+            return (
+              <section key={section.key} className="rv-role-section" aria-label={`${section.label} section`}>
+                <header className="rv-role-section__head">
+                  <h3 className="rv-role-section__title">{section.label}</h3>
+                  <span className="rv-role-section__meta">
+                    {people} {people === 1 ? "resource" : "resources"}
+                    {slots ? ` · ${slots} MyNextHire ${slots === 1 ? "slot" : "slots"}` : ""}
+                  </span>
+                  <CandidateStatusPill status={status} />
+                </header>
+                <div className="rv-role-section__body rv-scroll">
+                  {people ? (
+                    <RoleCandidatesTable
+                      candidates={section.candidates}
+                      handlers={handlers}
+                      roleFor={(c) => roleFromFilters(c.demand_filters, c.position_id)}
+                      monthKeys={monthKeys}
+                    />
+                  ) : null}
+                  {slots ? (
+                    <RoleMnhSlotsTable
+                      slots={section.mnhSlots}
+                      roleFor={(slot) => roleFromFilters(slot.demand_filters, slot.position_id)}
+                      monthKeys={monthKeys}
+                    />
+                  ) : null}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
     </TableCard>
   );
 }

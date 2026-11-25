@@ -7,11 +7,11 @@ import { roleCriteriaColumns, criterionValue, monthLabel, resolveMonthColumns } 
 
 export function RoleMnhSlotsTable({
   slots,
-  role,
+  roleFor,
   monthKeys = [],
 }: {
   slots: MnhStaffingSlot[];
-  role: ResourceRole;
+  roleFor: (slot: MnhStaffingSlot) => ResourceRole;
   monthKeys?: string[];
 }) {
   const monthCols = resolveMonthColumns(monthKeys, []);
@@ -55,40 +55,43 @@ export function RoleMnhSlotsTable({
             </tr>
           </thead>
           <tbody>
-            {slots.map((slot) => (
-              <tr key={slot.id} className="rv-role-candidate-row rv-role-candidate-row--mnh border-b border-hairline last:border-0">
-                <td className="rv-role-cand-cell align-top px-2 py-2">
-                  <Pill fg="var(--color-warning)">{slot.status}</Pill>
-                </td>
-                {roleCriteriaColumns.map((col) => (
-                  <td
-                    key={col.key}
-                    className={[
-                      "rv-role-cand-cell",
-                      "rv-role-cand-crit",
-                      "align-top px-2 py-2",
-                      criterionValue(String(role[col.key] ?? "")) === "Any" ? "rv-role-cand-crit--any" : "",
-                    ].join(" ")}
-                  >
-                    {criterionValue(String(role[col.key] ?? ""))}
+            {slots.map((slot) => {
+              const role = roleFor(slot);
+              return (
+                <tr key={slot.id} className="rv-role-candidate-row rv-role-candidate-row--mnh border-b border-hairline last:border-0">
+                  <td className="rv-role-cand-cell align-top px-2 py-2">
+                    <Pill fg="var(--color-warning)">{slot.status}</Pill>
                   </td>
-                ))}
-                <th scope="row" className="rv-role-cand-cell rv-role-cand-emp align-top px-2 py-2 text-left font-medium text-ink">
-                  <div>MyNextHire placeholder</div>
-                  <div className="font-normal text-muted">
-                    Slot {slot.slot_index} of {slot.headcount_total} · {slot.capability}
-                  </div>
-                </th>
-                {monthCols.map((mk) => (
-                  <td key={mk} className="rv-role-cand-cell rv-role-cand-month align-top px-1.5 py-2 text-center">
-                    <span className="rv-role-cand-hours rv-role-cand-hours--empty">TBD</span>
+                  {roleCriteriaColumns.map((col) => (
+                    <td
+                      key={col.key}
+                      className={[
+                        "rv-role-cand-cell",
+                        "rv-role-cand-crit",
+                        "align-top px-2 py-2",
+                        criterionValue(String(role[col.key] ?? "")) === "Any" ? "rv-role-cand-crit--any" : "",
+                      ].join(" ")}
+                    >
+                      {criterionValue(String(role[col.key] ?? ""))}
+                    </td>
+                  ))}
+                  <th scope="row" className="rv-role-cand-cell rv-role-cand-emp align-top px-2 py-2 text-left font-medium text-ink">
+                    <div>MyNextHire placeholder</div>
+                    <div className="font-normal text-muted">
+                      Slot {slot.slot_index} of {slot.headcount_total} · {slot.capability}
+                    </div>
+                  </th>
+                  {monthCols.map((mk) => (
+                    <td key={mk} className="rv-role-cand-cell rv-role-cand-month align-top px-1.5 py-2 text-center">
+                      <span className="rv-role-cand-hours rv-role-cand-hours--empty">TBD</span>
+                    </td>
+                  ))}
+                  <td className="rv-role-cand-cell align-top px-2 py-2 text-ink-soft">
+                    HR staffing in progress; hours assigned when a hire is onboarded.
                   </td>
-                ))}
-                <td className="rv-role-cand-cell align-top px-2 py-2 text-ink-soft">
-                  HR staffing in progress; hours assigned when a hire is onboarded.
-                </td>
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
